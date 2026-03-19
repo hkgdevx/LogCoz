@@ -64,16 +64,18 @@ After installation, use either:
 
 ## Quick Start
 
-Analyze a log file:
+Analyze a realistic Redis connection failure:
+
+```text
+2026-03-19T10:10:00Z ERROR Error: connect ECONNREFUSED 127.0.0.1:6379
+[ioredis] Unhandled error event
+service=api requestId=redis-123
+```
+
+Run:
 
 ```bash
 logcozcli explain ./app.log
-```
-
-Use the compatibility alias:
-
-```bash
-logcoz explain ./app.log
 ```
 
 Analyze with context and confidence reasoning:
@@ -82,10 +84,10 @@ Analyze with context and confidence reasoning:
 logcozcli explain ./app.log --context .env,docker-compose.yml,k8s.yaml --include-reasoning
 ```
 
-Enable mock LLM enhancement:
+Emit structured JSON:
 
 ```bash
-logcozcli explain ./app.log --llm --llm-provider mock
+logcozcli explain ./app.log --json
 ```
 
 Enable the OpenAI provider:
@@ -94,19 +96,7 @@ Enable the OpenAI provider:
 OPENAI_API_KEY=YOUR_API_KEY logcozcli explain ./app.log --llm --llm-provider openai --llm-model gpt-5-mini
 ```
 
-Emit structured JSON:
-
-```bash
-logcozcli explain ./app.log --json
-```
-
 Correlate multiple logs:
-
-```bash
-logcozcli correlate ./api.log ./worker.log ./nginx.log
-```
-
-Correlate as JSON:
 
 ```bash
 logcozcli correlate ./api.log ./worker.log ./nginx.log --json
@@ -191,11 +181,32 @@ OpenAI configuration:
 
 If the OpenAI provider is misconfigured or returns unusable output, LogCoz CLI falls back to the deterministic explanation and appends a warning instead of failing the command.
 
+## Troubleshooting
+
+### `OPENAI_API_KEY` is missing
+
+If you select `--llm-provider openai` without a valid API key, the command still succeeds and returns the base explanation with a warning.
+
+### Provider fallback behavior
+
+LLM providers are optional enhancements. The rule-based explanation path remains the default and fallback behavior.
+
+### Empty correlation results
+
+`correlate --json` returns a success envelope with `count: 0` and an empty `incidents` array if no shared identifiers are found.
+
+### `logcozcli` vs `logcoz`
+
+Both commands work. `logcozcli` is the primary documented binary, and `logcoz` is kept as a compatibility alias.
+
 ## Publishing
 
 The package is intended for public npm publishing.
 
-Release notes and versioning are managed with Changesets, and the primary release workflow publishes from GitHub Actions using an npm token secret.
+Release notes and versioning are managed with Changesets, and the primary release workflow publishes from GitHub Actions using:
+
+- `GITHUB_TOKEN`
+- `NPM_TOKEN`
 
 Before the first public release, verify the target version is still free on npm:
 
@@ -204,6 +215,15 @@ npm view @hkgdevx/logcoz version --registry https://registry.npmjs.org
 ```
 
 At the time of this repo update, the public registry returned `404` for `@hkgdevx/logcoz`, so `0.1.0` is available unless something is published later.
+
+Pre-publish smoke check:
+
+```bash
+pnpm check
+pnpm build
+npm pack --dry-run
+pnpm publish --dry-run --no-git-checks --access public --registry https://registry.npmjs.org
+```
 
 ## Cross-Platform Notes
 

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { logFixtures } from '@/tests/fixtures/logs';
 
 vi.mock('ora', () => ({
   default: () => ({
@@ -19,27 +20,28 @@ describe('correlate command', () => {
     process.exitCode = 0;
   });
 
-  it('prints correlated incidents in text mode', async () => {
+  it('prints stable text output for a correlation fixture', async () => {
     const { readTextFile } = await import('@/utils/file');
     vi.mocked(readTextFile)
-      .mockResolvedValueOnce('[api] 2026-03-19T10:10:00Z ERROR requestId=abc123 failed')
-      .mockResolvedValueOnce('[nginx] 2026-03-19T10:10:01Z WARN requestId=abc123 upstream 502');
+      .mockResolvedValueOnce(logFixtures.correlationApi)
+      .mockResolvedValueOnce(logFixtures.correlationProxy);
 
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const { correlate } = await import('@/commands/correlate');
 
     await correlate(['api.log', 'nginx.log'], {});
 
-    expect(logSpy.mock.calls.some((call) => String(call[0]).includes('Correlated incident'))).toBe(
-      true
-    );
+    const text = logSpy.mock.calls.map((call) => String(call[0])).join('\n');
+    expect(text).toContain('Correlated incident: requestId:abc123');
+    expect(text).toContain('Shared keys');
+    expect(text).toContain('Timeline:');
   });
 
   it('prints json envelope when --json is used', async () => {
     const { readTextFile } = await import('@/utils/file');
     vi.mocked(readTextFile)
-      .mockResolvedValueOnce('[api] 2026-03-19T10:10:00Z ERROR requestId=abc123 failed')
-      .mockResolvedValueOnce('[nginx] 2026-03-19T10:10:01Z WARN requestId=abc123 upstream 502');
+      .mockResolvedValueOnce(logFixtures.correlationApi)
+      .mockResolvedValueOnce(logFixtures.correlationProxy);
 
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const { correlate } = await import('@/commands/correlate');
@@ -47,15 +49,21 @@ describe('correlate command', () => {
     await correlate(['api.log', 'nginx.log'], { json: true });
 
     const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
-    expect(payload.cliName).toBe('logcozcli');
-    expect(payload.status).toBe('correlated');
-    expect(payload.result.count).toBe(1);
+    expect(payload).toMatchObject({
+      cliName: 'logcozcli',
+      status: 'correlated',
+      result: {
+        count: 1
+      }
+    });
     expect(payload.result.incidents).toHaveLength(1);
   });
 
   it('returns a success envelope with empty results when no incidents are found', async () => {
     const { readTextFile } = await import('@/utils/file');
-    vi.mocked(readTextFile).mockResolvedValueOnce('startup complete').mockResolvedValueOnce('ok');
+    vi.mocked(readTextFile)
+      .mockResolvedValueOnce(logFixtures.noIncidentsA)
+      .mockResolvedValueOnce(logFixtures.noIncidentsB);
 
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const { correlate } = await import('@/commands/correlate');

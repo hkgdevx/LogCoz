@@ -133,6 +133,17 @@ pnpm publish --dry-run --access public
 
 If manual publish is ever needed outside CI, use an npm-authenticated session and keep provenance expectations in mind.
 
+## Pre-Publish Smoke Check
+
+Run this exact sequence before the first public npm release:
+
+```bash
+pnpm check
+pnpm build
+npm pack --dry-run
+pnpm publish --dry-run --no-git-checks --access public --registry https://registry.npmjs.org
+```
+
 ## LLM Provider Matrix
 
 Current provider modes:
