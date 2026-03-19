@@ -97,9 +97,10 @@ Release automation uses Changesets and GitHub Actions.
 
 Current release behavior:
 
-- pushes to `main` trigger the release workflow
+- successful CI runs on `main` trigger the release workflow
 - `changesets/action` either opens a release PR or publishes
 - publishing uses `pnpm publish --no-git-checks --access public --provenance`
+- release skips publish if the current package version already exists on npm
 
 ## Public npm Publishing
 
@@ -117,6 +118,7 @@ Consumers can install directly from npm without any scope-specific `.npmrc` over
 Repository maintainers should configure:
 
 - `NPM_TOKEN` in GitHub repository secrets
+- `GITHUB_TOKEN` is provided automatically for GitHub-side release automation
 - npm package access/ownership for the `@hkgdevx` scope
 
 Before the first public release, verify whether `0.1.0` is still available on npm. If not, bump to the next patch version before publishing.

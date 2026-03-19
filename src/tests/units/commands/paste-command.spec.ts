@@ -16,20 +16,24 @@ vi.mock('@/utils/file', () => ({
   readFromStdin: vi.fn()
 }));
 
+import { paste } from '@/commands/paste';
+import { readFromStdin } from '@/utils/file';
+
 describe('paste command', () => {
   afterEach(() => {
-    vi.restoreAllMocks();
-    oraStart.mockClear();
+    vi.clearAllMocks();
+    oraStart.mockImplementation(() => ({
+      succeed: vi.fn(),
+      fail: vi.fn()
+    }));
     delete process.env.OPENAI_API_KEY;
     process.exitCode = 0;
   });
 
   it('prints stable text output for an oom fixture', async () => {
-    const { readFromStdin } = await import('@/utils/file');
     vi.mocked(readFromStdin).mockResolvedValue(logFixtures.oomFailure);
 
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const { paste } = await import('@/commands/paste');
 
     await paste({ includeReasoning: true });
 
@@ -39,11 +43,9 @@ describe('paste command', () => {
   });
 
   it('prints stable json output for paste --json', async () => {
-    const { readFromStdin } = await import('@/utils/file');
     vi.mocked(readFromStdin).mockResolvedValue(logFixtures.oomFailure);
 
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const { paste } = await import('@/commands/paste');
 
     await paste({ json: true, includeReasoning: true });
 
@@ -58,12 +60,10 @@ describe('paste command', () => {
   });
 
   it('supports openai provider selection in json mode', async () => {
-    const { readFromStdin } = await import('@/utils/file');
     vi.mocked(readFromStdin).mockResolvedValue(logFixtures.oomFailure);
 
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     process.env.OPENAI_API_KEY = 'test-key';
-    const { paste } = await import('@/commands/paste');
 
     await paste({ json: true, llm: true, llmProvider: 'openai' });
 

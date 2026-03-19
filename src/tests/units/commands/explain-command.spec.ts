@@ -16,20 +16,24 @@ vi.mock('@/utils/file', () => ({
   readTextFile: vi.fn()
 }));
 
+import { explain } from '@/commands/explain';
+import { readTextFile } from '@/utils/file';
+
 describe('explain command', () => {
   afterEach(() => {
-    vi.restoreAllMocks();
-    oraStart.mockClear();
+    vi.clearAllMocks();
+    oraStart.mockImplementation(() => ({
+      succeed: vi.fn(),
+      fail: vi.fn()
+    }));
     delete process.env.OPENAI_API_KEY;
     process.exitCode = 0;
   });
 
   it('prints stable text output for a redis fixture', async () => {
-    const { readTextFile } = await import('@/utils/file');
     vi.mocked(readTextFile).mockResolvedValue(logFixtures.redisConnection);
 
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const { explain } = await import('@/commands/explain');
 
     await explain('redis.log', { includeReasoning: true });
 
@@ -40,11 +44,9 @@ describe('explain command', () => {
   });
 
   it('prints json envelope for explain --json', async () => {
-    const { readTextFile } = await import('@/utils/file');
     vi.mocked(readTextFile).mockResolvedValue(logFixtures.redisConnection);
 
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const { explain } = await import('@/commands/explain');
 
     await explain('app.log', {
       json: true,
@@ -65,12 +67,10 @@ describe('explain command', () => {
   });
 
   it('supports openai provider selection without breaking json output', async () => {
-    const { readTextFile } = await import('@/utils/file');
     vi.mocked(readTextFile).mockResolvedValue(logFixtures.redisConnection);
 
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     process.env.OPENAI_API_KEY = 'test-key';
-    const { explain } = await import('@/commands/explain');
 
     await explain('app.log', { json: true, llm: true, llmProvider: 'openai' });
 
