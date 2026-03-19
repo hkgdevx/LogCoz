@@ -1,0 +1,13 @@
+# type(scope): short summary
+#
+# Examples:
+# feat(detector): add redis auth failure detector
+# fix(cli): handle missing file path argument
+# chore(repo): add prettier config
+#
+# Body (optional):
+# Why is this change needed?
+# What approach was taken?
+#
+# Footer (optional):
+# Closes #123

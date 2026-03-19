@@ -1,0 +1,60 @@
+name: Feature request
+description: Suggest a new feature or improvement for LogCoz
+title: '[Feature]: '
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What problem are you trying to solve?
+      placeholder: Describe the workflow pain point.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What would you like LogCoz to do?
+      placeholder: Describe the feature idea.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      placeholder: What are you doing today instead?
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Example usage
+      description: Share example commands, logs, or outputs.
+      placeholder: |
+        logcoz explain app.log --context .env,docker-compose.yml
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - CLI
+        - Detector
+        - Context analysis
+        - Formatting
+        - LLM enhancement
+        - CI/CD
+        - Docs
+        - Packaging
+        - Other
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submit checks
+      options:
+        - label: I searched existing issues
+          required: true

@@ -1,0 +1,81 @@
+{
+  "name": "@hkgdevx/logcoz",
+  "version": "0.1.0",
+  "description": "LogCoz is an intelligent CLI for analyzing application and infrastructure logs. It extracts meaningful signals, detects common failure patterns, and provides root-cause explanations with actionable debugging steps — enhanced by optional context from your environment and configuration.",
+  "license": "MIT",
+  "author": {
+    "name": "Harikrishnan Gangadharan",
+    "email": "hkg1512@gmail.com",
+    "url": "https://www.hkgdev.com"
+  },
+  "type": "module",
+  "bin": {
+    "logcozcli": "dist/cli.js",
+    "logcoz": "dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "tsx src/cli.ts",
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,js,mjs,cjs,json,md,yml,yaml}": [
+      "prettier --write"
+    ],
+    "*.{ts,js,mjs,cjs}": [
+      "eslint --fix"
+    ]
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hkgdevx/LogCoz.git"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.30.0",
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
+    "@eslint/js": "^9.39.4",
+    "@types/node": "^22.19.15",
+    "eslint": "^9.39.4",
+    "eslint-import-resolver-typescript": "^4.4.4",
+    "eslint-plugin-import": "^2.32.0",
+    "globals": "^17.4.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "tsup": "^8.5.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.57.1",
+    "vitest": "^4.1.0"
+  },
+  "dependencies": {
+    "boxen": "^8.0.1",
+    "chalk": "^5.6.2",
+    "commander": "^14.0.3",
+    "openai": "^4.104.0",
+    "ora": "^9.3.0",
+    "strip-ansi": "^7.2.0"
+  }
+}
