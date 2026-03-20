@@ -11,6 +11,6 @@
 export const prePublishSmokeChecks = [
   'pnpm check',
   'pnpm build',
-  'npm pack --dry-run',
+  'pnpm smoke:packaged-cli',
   'pnpm publish --dry-run --no-git-checks --access public --registry https://registry.npmjs.org'
 ] as const;

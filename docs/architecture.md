@@ -1,176 +1,146 @@
 # Architecture
 
-This document describes the current LogCoz runtime flow as implemented today.
+This document describes the current LogCoz runtime flow as implemented.
 
-## Overview
+## Entry Points
 
-The CLI has three entry points:
+The CLI now has six user-facing paths:
 
-- `explain` reads a log file
-- `paste` reads from stdin
-- `correlate` groups events across multiple files
+- `explain <file>`
+- `explain docker`
+- `paste`
+- `correlate <files...>`
+- `correlate docker`
+- `analyze`
 
-`explain` and `paste` share the same analysis pipeline. `correlate` uses a separate correlation pipeline.
+`explain <file>`, `explain docker`, and `paste` share the same detection and explanation pipeline. `correlate` and `correlate docker` share the correlation pipeline. `analyze` collects multiple runtime sources, analyzes them individually, and then groups the result.
 
-## Analysis Pipeline
+## Shared Explanation Pipeline
 
-For `explain` and `paste`, the flow is:
+The explanation flow is:
 
-1. Read raw text input from a file or stdin
-2. Redact common secrets
-3. Normalize the log text
-4. Extract the most relevant block around known error signals
-5. Load optional context hints from user-supplied files
-6. Build a detection context
-7. Run all registered detectors
-8. Select the strongest candidate by score, specificity, and confidence
-9. Convert the winning detection into an explanation object
-10. Optionally enrich the explanation via the configured LLM provider
-11. Format the result for terminal output or emit a structured JSON envelope
+1. read raw input from a file, stdin, or a collected runtime source
+2. redact common secrets
+3. normalize the log text
+4. extract a smaller relevant block around known error signals
+5. load optional context hints from user-supplied files
+6. build a detection context
+7. run all registered detectors
+8. select the strongest candidate by score, specificity, and confidence
+9. convert the winning detection into an explanation result
+10. optionally enrich the result through the configured LLM provider
+11. format the result for terminal output or emit a structured JSON envelope
 
-## Input Reading
+## Runtime Collection Model
 
-- `logcoz explain <file>` reads a UTF-8 text file
-- `logcoz paste` buffers stdin until the stream ends
-- Empty stdin is treated as an error for `paste`
+Runtime collection is built around a shared `CollectedSource` shape:
 
-## Redaction
+- `id`
+- `kind`
+- `displayName`
+- `serviceType`
+- `raw`
+- `metadata`
 
-Redaction runs before normalization and detection. It currently applies regex replacements for:
+Current source kinds:
 
-- `password=...` or `password: ...`
-- `token=...` or `token: ...`
-- `secret=...` or `secret: ...`
-- Bearer tokens
-- Credentials inside Postgres and Redis URLs
+- `file`
+- `stdin`
+- `docker-container`
+- `system-log`
 
-This is best-effort redaction only. It does not parse every possible credential format.
+Current service classifications:
 
-## Normalization
+- `app`
+- `postgres`
+- `redis`
+- `mongodb`
+- `nginx`
+- `ssh`
+- `system`
+- `kubernetes`
+- `unknown`
 
-Normalization removes ANSI escape sequences, converts Windows line endings to `\n`, replaces tabs with spaces, collapses very large blank-line runs, and trims the result.
+## Docker Collection
 
-This step helps detectors work on a cleaner and more uniform input shape.
+Docker collection uses the local `docker` CLI only.
 
-## Relevant Block Extraction
+Current behavior:
 
-The extractor scans the normalized log for signal patterns such as:
+- list local containers through `docker ps`
+- classify them using container names and image names
+- collect logs with `docker logs`
+- support `--container`, `--service`, `--tail`, and `--since`
 
-- `error`
-- `exception`
-- `ECONNREFUSED`
-- `EADDRINUSE`
-- `ENOENT`
-- `ENOTFOUND`
-- `502 Bad Gateway`
-- `timeout`
+Direct remote Docker context support is intentionally out of scope for this release.
 
-When a signal is found, the extractor keeps a configurable number of surrounding lines on both sides. If nothing matches, it falls back to the last 20 lines of the input.
+## System Collection
 
-The current defaults are:
+System collection is local-only.
 
-- `DEFAULT_CONTEXT_LINES = 6`
-- `MAX_EVIDENCE_LINES = 5`
-- `MIN_DETECTION_SCORE = 40`
+Current behavior:
 
-## Context Hints
-
-When `--context <files>` is passed, LogCoz reads each listed file and extracts lightweight hints. Current hint sources include:
-
-- `REDIS_HOST=localhost`
-- `REDIS_PORT=<number>`
-- `DB_HOST=localhost`
-- Compose-like service names
-- Docker port mappings
-
-Context hints are attached to the detection context. They are still lightweight, but the CLI now extracts hints from env files, Compose-like files, Kubernetes manifests, and JSON configs.
-
-## Detection
-
-LogCoz registers a fixed list of detectors:
-
-- Docker
-- Redis
-- PostgreSQL
-- Nginx
-- Port conflicts
-- Network timeouts
-- DNS failures
-- Missing files
-
-Each detector:
-
-- runs regex-based pattern rules against the normalized extracted block
-- returns `null` if the score is below threshold
-- returns a `DetectionCandidate` if it finds a strong enough match
-
-The winning candidate is chosen by:
-
-1. highest score
-2. highest specificity
-3. highest confidence
-
-If no detector matches, LogCoz returns an `unknown` fallback issue.
-
-## Explanation Generation
-
-The explanation layer converts a detection into a stable human-facing structure:
-
-- issue type
-- title
-- category
-- confidence
-- explanation text
-- evidence lines
-- likely causes
-- suggested fixes
-- debug commands
-- optional metadata
-
-This layer is deterministic and rule-based. It also carries optional `confidenceReasons` so the CLI can expose why a detector won when requested.
-
-## Formatting
-
-Terminal output uses `chalk` and `boxen` to render:
-
-- a header
-- issue summary
-- confidence
-- explanation
-- evidence
-- likely causes
-- suggested fixes
-- debug commands
-
-If `--json` is passed, the CLI prints a structured envelope with schema metadata, CLI metadata, exit code, status, and the explanation result.
+- prefer `journalctl` for broad system, SSH, and Docker-daemon logs
+- fall back to well-known local files such as `auth.log` and `syslog` when journal output is unavailable
+- classify host sources as `ssh` or `system`
 
 ## Correlation Pipeline
 
-`logcoz correlate <files...>` follows a separate flow:
+The correlation flow is:
 
-1. Read all supplied files
-2. Split into lines
-3. Convert each line into a `LogEvent`
-4. Extract correlation keys, timestamp, and log level where possible
-5. Group by the first extracted correlation key
-6. Return incident groups sorted by group size
+1. split collected inputs into lines
+2. convert each line into a `LogEvent`
+3. extract timestamps, levels, service hints, and correlation keys
+4. choose the strongest correlation key deterministically
+5. group events by that key
+6. derive confidence, shared keys, and timeline ordering
 
-Current supported correlation keys are:
+Supported keys:
 
 - `traceId`
 - `requestId`
 - `correlationId`
 - `jobId`
 
-This is intentionally lightweight. It does not yet reason about time windows, service names, or causal ordering.
+For Docker/runtime correlation, sources are prefixed before grouping so service attribution survives the collection step.
 
-## LLM Provider Status
+`correlate docker` is now explicitly multi-source:
 
-The repository now includes an active provider abstraction with:
+- it may collect multiple containers
+- it may include local system sources in the same run
+- it fails early if fewer than 2 runtime sources are collected
 
-- `NoopLlmProvider`
-- `MockLlmProvider`
-- `HttpLlmProvider`
-- `OpenAiLlmProvider`
+## Analyze Pipeline
 
-`explain` and `paste` can opt into provider-backed enhancement through CLI flags or environment variables. The deterministic explanation path remains the default behavior, and provider failures fall back to the base explanation with warnings.
+`analyze` is the grouped runtime workflow:
+
+1. auto-discover local Docker and system sources unless include flags narrow the scope
+2. collect logs into normalized source records
+3. run the explanation pipeline per source
+4. correlate collected sources together
+5. derive security findings from evidence-backed auth/TLS/SSH/posture patterns
+6. return one grouped report containing:
+   - `sources`
+   - `incidents`
+   - `correlations`
+   - `securityFindings`
+   - `summary`
+
+## Security Model
+
+Security output is intentionally lightweight and evidence-based.
+
+Included today:
+
+- auth and access failures found in logs
+- TLS and certificate failures
+- SSH login anomalies
+- repeated authentication failures
+- container localhost/service mismatch hints
+
+Not included:
+
+- vulnerability scanning
+- CVE intelligence
+- compliance auditing
+- broad static security posture analysis

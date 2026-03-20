@@ -1,6 +1,6 @@
 # CLI Reference
 
-This page documents the current CLI exactly as implemented.
+This page documents the current CLI surface as implemented.
 
 The primary command name is `logcozcli`. `logcoz` remains a supported alias.
 
@@ -13,183 +13,91 @@ logcozcli --help
 
 ## `logcozcli explain <file>`
 
-Analyze a log file and explain the likely root cause.
-
-### Usage
+Analyze a file and explain the strongest detected issue.
 
 ```bash
 logcozcli explain <file> [--json] [--context <files>] [--llm] [--llm-provider <provider>] [--llm-endpoint <url>] [--llm-model <model>] [--include-reasoning]
 ```
 
-### Arguments
+## `logcozcli explain docker`
 
-- `<file>` path to the log file to analyze
-
-### Options
-
-- `--json` print the explanation as structured JSON
-- `--context <files>` comma-separated context files, for example `.env,docker-compose.yml`
-- `--llm` enable LLM-based explanation enhancement
-- `--llm-provider <provider>` provider mode, currently `mock`, `http`, or `openai`
-- `--llm-endpoint <url>` HTTP endpoint for the `http` provider
-- `--llm-model <model>` model identifier sent to the configured provider
-- `--include-reasoning` include detector confidence-reason details
-
-### Behavior
-
-- reads the file as UTF-8 text
-- redacts common secrets before detection
-- extracts a smaller relevant block from the log
-- loads optional context hints from the listed files
-- runs detectors and formats the winning explanation
-- exits with status `1` on read or analysis failure
-
-### Example
+Collect local Docker logs and run the same explanation pipeline.
 
 ```bash
-logcozcli explain ./logs/api.log --context .env,docker-compose.yml --include-reasoning
+logcozcli explain docker [--container <name-or-id>] [--service <service>] [--tail <n>] [--since <value>] [--json] [--context <files>] [--llm] [--llm-provider <provider>] [--llm-endpoint <url>] [--llm-model <model>] [--include-reasoning]
 ```
 
-### Representative Output
+Key options:
 
-```text
-Issue: Redis connection refused
-Category: database
-Confidence: 93%
-
-Explanation
-Your application tried to connect to Redis, but no service accepted the connection on the target host and port.
-```
-
-OpenAI-specific env vars:
-
-- `OPENAI_API_KEY` or `LOGCOZ_LLM_API_KEY`
-- optional `LOGCOZ_OPENAI_BASE_URL` or `OPENAI_BASE_URL`
+- `--container <name-or-id>` select one container explicitly
+- `--service <service>` filter by `postgres`, `redis`, `mongodb`, `nginx`, or similar service types
+- `--tail <n>` limit collected lines, default `200`
+- `--since <value>` pass a relative duration or timestamp to Docker log collection
 
 ## `logcozcli paste`
 
-Read logs from stdin and analyze them.
-
-### Usage
+Read logs from stdin and explain the strongest detected issue.
 
 ```bash
 logcozcli paste [--json] [--context <files>] [--llm] [--llm-provider <provider>] [--llm-endpoint <url>] [--llm-model <model>] [--include-reasoning]
 ```
 
-### Options
-
-- `--json` print the explanation as structured JSON
-- `--context <files>` comma-separated context files, for example `.env,docker-compose.yml`
-- `--llm` enable LLM-based explanation enhancement
-- `--llm-provider <provider>` provider mode, currently `mock`, `http`, or `openai`
-- `--llm-endpoint <url>` HTTP endpoint for the `http` provider
-- `--llm-model <model>` model identifier sent to the configured provider
-- `--include-reasoning` include detector confidence-reason details
-
-### Behavior
-
-- reads from stdin until the stream ends
-- fails if stdin is empty or whitespace only
-- otherwise runs the same pipeline as `explain`
-- exits with status `1` on input or analysis failure
-
-### Example
-
-```bash
-cat ./logs/worker.log | logcozcli paste --json
-```
-
-### Representative Output
-
-The JSON output is an envelope:
-
-```json
-{
-  "schemaVersion": "1.0.0",
-  "cliName": "logcozcli",
-  "cliVersion": "0.1.0",
-  "exitCode": 0,
-  "status": "detected",
-  "result": {
-    "issueType": "network_timeout",
-    "title": "Network timeout or unreachable service",
-    "category": "network",
-    "confidence": 0.82
-  }
-}
-```
-
 ## `logcozcli correlate <files...>`
 
-Correlate multiple log files into incident groups.
-
-### Usage
+Correlate multiple files into incident groups.
 
 ```bash
 logcozcli correlate <files...> [--json]
 ```
 
-### Options
+## `logcozcli correlate docker`
 
-- `--json` print correlation results as a structured JSON envelope
-
-### Arguments
-
-- `<files...>` one or more log file paths
-
-### Behavior
-
-- reads all supplied files
-- extracts log events line by line
-- extracts supported correlation keys from each line
-- groups events by the first extracted key
-- can emit a structured JSON envelope when `--json` is passed
-- prints grouped incidents in descending size order
-- prints `No correlated incidents found.` if nothing groups successfully
-- exits with status `1` on read or analysis failure
-
-### Example
+Collect multiple Docker sources and optional system sources, annotate them by source, and run the correlation pipeline.
 
 ```bash
-logcozcli correlate ./logs/api.log ./logs/worker.log ./logs/nginx.log
+logcozcli correlate docker [--container <name-or-id...>] [--service <service...>] [--include-system] [--system-source <name...>] [--tail <n>] [--since <value>] [--json]
 ```
 
-### JSON Output Example
+Key behavior:
 
-```json
-{
-  "schemaVersion": "1.0.0",
-  "cliName": "logcozcli",
-  "cliVersion": "0.1.0",
-  "exitCode": 0,
-  "status": "correlated",
-  "result": {
-    "incidents": [
-      {
-        "title": "Correlated incident: requestId:abc123"
-      }
-    ],
-    "count": 1,
-    "metadata": {
-      "filesAnalyzed": 3
-    }
-  }
-}
+- runtime correlation requires at least 2 collected sources
+- `--container` can be repeated to name multiple containers explicitly
+- `--service` can be repeated to include multiple service classes
+- `--include-system` adds local system-log sources to the same correlation run
+- `--system-source` narrows the system side to sources such as `ssh`, `docker`, or `syslog`
+
+## `logcozcli analyze`
+
+Auto-discover local Docker and local system log sources, then return one grouped analysis report.
+
+```bash
+logcozcli analyze [--include-docker] [--include-system] [--include-services <services>] [--exclude-sources <sources>] [--container <name-or-id>] [--service <service>] [--tail <n>] [--since <value>] [--json] [--llm] [--llm-provider <provider>] [--llm-endpoint <url>] [--llm-model <model>] [--include-reasoning]
 ```
 
-### Representative Output
+Key behavior:
 
-```text
-Incident: Correlated incident: requestId:abc123
-Confidence: 82%
-Shared keys: {"requestId":"abc123"}
-Timeline:
-- 2026-03-19T10:10:00Z | requestId=abc123 failed to fetch Redis
-- 2026-03-19T10:10:01Z | requestId=abc123 upstream returned 502
-```
+- if no include flags are passed, LogCoz searches both Docker and system sources
+- if include flags are passed, only the requested source families are collected
+- `--include-services <services>` narrows collection by discovered service type
+- `--exclude-sources <sources>` removes named or id-matched sources from the grouped report
+- `--container` and `--service` can be used to bias runtime collection toward a specific Docker target
+
+## JSON Output
+
+`explain --json`, `paste --json`, `correlate --json`, and `analyze --json` all emit stable envelopes.
+
+`analyze --json` returns:
+
+- `sources`
+- `incidents`
+- `correlations`
+- `securityFindings`
+- `summary`
+- optional `metadata`
 
 ## Notes and Limits
 
-- `--json` is available only for `explain` and `paste`
-- `--context` now supports shallow structured hints from `.env`, Compose, Kubernetes, and JSON config files
-- correlation remains deterministic and lightweight, not a full tracing backend
+- runtime collection is local-only in this version
+- direct Kubernetes collection is not implemented yet
+- correlation is deterministic and lightweight, not a full tracing backend
+- security findings are evidence-based and are not a complete security audit

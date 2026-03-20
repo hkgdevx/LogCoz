@@ -28,6 +28,7 @@
     "dev": "tsx src/cli.ts",
     "build": "tsup",
     "prepack": "pnpm build",
+    "smoke:packaged-cli": "node ./scripts/verify-packaged-cli.mjs",
     "release:publish": "node ./scripts/release-publish.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",

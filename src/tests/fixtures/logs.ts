@@ -36,6 +36,16 @@ service=worker requestId=oom-123`,
   dockerFailure: `2026-03-19T10:17:00Z WARN container app marked unhealthy
 healthcheck failed: curl: (7) Failed to connect to localhost port 3000`,
 
+  dockerRedisFailure: `2026-03-19T10:10:00Z ERROR Error: connect ECONNREFUSED 127.0.0.1:6379
+[ioredis] Unhandled error event
+container=api requestId=docker-redis-123`,
+
+  dockerMongoFailure: `2026-03-19T10:14:00Z ERROR MongoNetworkError: failed to connect to server mongo:27017
+container=api requestId=docker-mongo-123`,
+
+  sshFailure: `Mar 19 10:20:00 host sshd[123]: Failed password for invalid user root from 10.0.0.5 port 22 ssh2
+Mar 19 10:20:10 host sshd[123]: Failed password for invalid user root from 10.0.0.5 port 22 ssh2`,
+
   kubernetesFailure: `2026-03-19T10:18:00Z WARN pod api CrashLoopBackOff
 Back-off pulling image registry/app:latest`,
 

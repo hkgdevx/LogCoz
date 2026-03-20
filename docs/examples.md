@@ -1,6 +1,6 @@
 # Examples
 
-This page shows realistic examples built from the same incident shapes covered by the fixture-backed command tests.
+This page shows examples aligned to the current CLI and fixture-backed tests.
 
 ## Install From npm
 
@@ -14,167 +14,110 @@ Or:
 npm install -g @hkgdevx/logcoz
 ```
 
-## Analyze a Redis Connection Failure
-
-Example log:
-
-```text
-2026-03-19T10:10:00Z ERROR Error: connect ECONNREFUSED 127.0.0.1:6379
-[ioredis] Unhandled error event
-service=api requestId=redis-123
-```
-
-Run:
+## Explain a File-Based Redis Failure
 
 ```bash
-logcozcli explain ./fixtures/redis.log
+logcozcli explain ./fixtures/redis.log --context .env,docker-compose.yml --include-reasoning
 ```
 
-Typical outcome:
+Typical result:
 
 - issue: Redis connection refused
 - category: database
-- likely fix: verify Redis is reachable and not misconfigured as `localhost` inside containers
+- likely fix: verify Redis is reachable and avoid using `localhost` inside containers
 
-## Analyze a Redis Failure With Context
-
-```bash
-logcozcli explain ./fixtures/redis.log --context .env,docker-compose.yml,k8s.yaml --include-reasoning
-```
-
-Use this when the logs alone are not enough and the failing service depends on env or infrastructure configuration.
-
-## Analyze an OOM Failure From stdin
-
-Example log:
-
-```text
-2026-03-19T10:16:00Z FATAL FATAL ERROR: JavaScript heap out of memory
-service=worker requestId=oom-123
-```
-
-Run:
+## Explain Docker Container Logs
 
 ```bash
-cat ./fixtures/oom.log | logcozcli paste
+logcozcli explain docker --container api --tail 200 --json
 ```
 
-Typical outcome:
+Typical use:
 
-- issue: Out-of-memory or memory pressure failure
-- category: runtime
-- likely fix: inspect memory limits, workload size, and heap tuning
-
-## Get JSON Output
-
-```bash
-logcozcli explain ./fixtures/redis.log --json
-```
-
-Representative result:
-
-```json
-{
-  "schemaVersion": "1.0.0",
-  "cliName": "logcozcli",
-  "cliVersion": "0.1.0",
-  "exitCode": 0,
-  "status": "detected",
-  "result": {
-    "issueType": "redis_connection_refused",
-    "title": "Redis connection refused",
-    "category": "database",
-    "confidence": 0.93
-  }
-}
-```
-
-## Analyze With OpenAI
-
-```bash
-OPENAI_API_KEY=YOUR_API_KEY logcozcli explain ./fixtures/redis.log --llm --llm-provider openai --llm-model gpt-5-mini
-```
-
-If OpenAI is unavailable or misconfigured, the CLI falls back to the deterministic explanation and appends a warning instead of failing the command.
-
-## Analyze Pasted Logs as JSON
-
-```bash
-cat ./fixtures/oom.log | logcozcli paste --json --llm --llm-provider mock
-```
-
-This is useful for:
-
-- shell scripting
-- CI diagnostics
-- passing results into another internal tool
+- investigate one failing app container
+- inspect PostgreSQL, Redis, MongoDB, or Nginx containers directly
+- automate runtime diagnosis from a host shell
 
 ## Correlate Multiple Files
-
-Example logs:
-
-```text
-[api] 2026-03-19T10:10:00Z ERROR requestId=abc123 failed to fetch Redis
-[nginx] 2026-03-19T10:10:01Z WARN requestId=abc123 upstream returned 502
-```
-
-Run:
-
-```bash
-logcozcli correlate ./fixtures/api.log ./fixtures/nginx.log
-```
-
-Representative text result:
-
-```text
-Incident: Correlated incident: requestId:abc123
-Confidence: 89%
-Shared keys: {"requestId":"abc123"}
-Timeline:
-- 2026-03-19T10:10:00Z | [api] 2026-03-19T10:10:00Z ERROR requestId=abc123 failed to fetch Redis
-- 2026-03-19T10:10:01Z | [nginx] 2026-03-19T10:10:01Z WARN requestId=abc123 upstream returned 502
-```
-
-## Correlate Multiple Files as JSON
 
 ```bash
 logcozcli correlate ./fixtures/api.log ./fixtures/nginx.log --json
 ```
 
-Representative result:
+Typical result shape:
 
 ```json
 {
-  "schemaVersion": "1.0.0",
-  "cliName": "logcozcli",
-  "cliVersion": "0.1.0",
-  "exitCode": 0,
   "status": "correlated",
   "result": {
-    "incidents": [
-      {
-        "title": "Correlated incident: requestId:abc123"
-      }
-    ],
     "count": 1
   }
 }
 ```
 
-## Troubleshooting
+## Correlate Docker Sources
 
-### `OPENAI_API_KEY` is missing
+```bash
+logcozcli correlate docker --container api --container nginx --include-system --system-source ssh --json
+```
 
-If you select `--llm-provider openai` without a valid API key, the command still succeeds and returns the base explanation with a warning.
+Use this when you want to correlate app, proxy, and host-level evidence without exporting logs to files first.
 
-### Provider fallback behavior
+`correlate docker` requires at least 2 runtime sources. If you only need one container, use `logcozcli explain docker`.
 
-The `mock`, `http`, and `openai` providers are optional enhancements. The rule-based explanation remains the authoritative fallback path.
+## Run Grouped Runtime Analysis
 
-### Empty correlation results
+```bash
+logcozcli analyze --include-docker --include-system --include-reasoning
+```
 
-`correlate --json` returns a success envelope with `count: 0` and an empty `incidents` array if no shared identifiers are found.
+Typical grouped report sections:
 
-### `logcozcli` vs `logcoz`
+- discovered sources
+- top incidents
+- correlations
+- security findings
+- next actions
 
-Both commands work. `logcozcli` is the primary documented binary, and `logcoz` is kept as a compatibility alias.
+## Analyze MongoDB Runtime Failures
+
+```bash
+logcozcli explain docker --service mongodb --tail 150
+```
+
+Typical outcome:
+
+- issue: MongoDB connection or authentication error
+- likely fixes:
+  - verify MongoDB URI and credentials
+  - confirm MongoDB is listening on the expected interface and port
+
+## Investigate SSH or Security-Related Issues
+
+```bash
+logcozcli analyze --include-system --json
+```
+
+Typical security findings can include:
+
+- failed SSH logins
+- repeated authentication failures
+- TLS/certificate incidents
+- evidence-backed posture hints such as container localhost misuse
+
+## Use OpenAI Enhancement
+
+```bash
+OPENAI_API_KEY=YOUR_API_KEY logcozcli explain ./fixtures/redis.log --llm --llm-provider openai --llm-model gpt-5-mini
+```
+
+Provider failures fall back to the deterministic explanation path with a warning instead of failing the command.
+
+## Publish Smoke Check
+
+```bash
+pnpm check
+pnpm build
+pnpm smoke:packaged-cli
+pnpm publish --dry-run --no-git-checks --access public --registry https://registry.npmjs.org
+```

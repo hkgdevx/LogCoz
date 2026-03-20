@@ -100,6 +100,37 @@ interface CorrelatedIncident {
   metadata?: Record<string, unknown>;
 }
 
+type SourceKind = 'file' | 'stdin' | 'docker-container' | 'system-log';
+
+type ServiceType =
+  | 'app'
+  | 'postgres'
+  | 'redis'
+  | 'mongodb'
+  | 'nginx'
+  | 'ssh'
+  | 'system'
+  | 'kubernetes'
+  | 'unknown';
+
+interface CollectedSource {
+  id: string;
+  kind: SourceKind;
+  displayName: string;
+  serviceType: ServiceType;
+  raw: string;
+  metadata: {
+    host: 'local';
+    command?: string;
+    window?: string;
+    truncated?: boolean;
+    image?: string;
+    container?: string;
+    path?: string;
+    unit?: string;
+  };
+}
+
 interface PatternRule {
   pattern: RegExp;
   weight: number;
@@ -114,6 +145,10 @@ interface ExplainOptions {
   llmEndpoint?: string;
   llmModel?: string;
   includeReasoning?: boolean;
+  container?: string | string[];
+  service?: string | string[];
+  tail?: string | number;
+  since?: string;
 }
 
 interface PasteOptions {
@@ -158,6 +193,19 @@ interface ExplainOutputEnvelope {
 
 interface CorrelateOptions {
   json?: boolean;
+  container?: string | string[];
+  service?: string | string[];
+  tail?: string | number;
+  since?: string;
+  includeSystem?: boolean;
+  systemSource?: string | string[];
+}
+
+interface AnalyzeOptions extends ExplainOptions {
+  includeDocker?: boolean;
+  includeSystem?: boolean;
+  includeServices?: string;
+  excludeSources?: string;
 }
 
 interface CorrelateOutputResult {
@@ -173,4 +221,57 @@ interface CorrelateOutputEnvelope {
   exitCode: number;
   status: 'correlated';
   result: CorrelateOutputResult;
+}
+
+interface AnalyzeIncident {
+  id: string;
+  issueType: string;
+  title: string;
+  category: IssueCategory;
+  confidence: number;
+  sourceIds: string[];
+  sourceNames: string[];
+  serviceTypes: ServiceType[];
+  explanation: string;
+  evidence: string[];
+  likelyCauses: string[];
+  suggestedFixes: string[];
+  relatedCorrelationKeys: Record<string, string>;
+  confidenceReasons?: ConfidenceReason[];
+}
+
+interface SecurityFinding {
+  title: string;
+  severity: 'low' | 'medium' | 'high';
+  kind: 'incident' | 'posture';
+  evidence: string[];
+  sourceIds: string[];
+  recommendation: string;
+}
+
+interface AnalyzeSummary {
+  sourceCount: number;
+  incidentCount: number;
+  correlationCount: number;
+  securityFindingCount: number;
+  topIssueTitles: string[];
+  nextActions: string[];
+}
+
+interface AnalyzeOutputResult {
+  sources: CollectedSource[];
+  incidents: AnalyzeIncident[];
+  correlations: CorrelatedIncident[];
+  securityFindings: SecurityFinding[];
+  summary: AnalyzeSummary;
+  metadata?: Record<string, unknown>;
+}
+
+interface AnalyzeOutputEnvelope {
+  schemaVersion: string;
+  cliName: string;
+  cliVersion: string;
+  exitCode: number;
+  status: 'analyzed';
+  result: AnalyzeOutputResult;
 }

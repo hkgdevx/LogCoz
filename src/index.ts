@@ -15,3 +15,5 @@ export * from '@/core/analyze';
 export * from '@/core/explain';
 export * from '@/core/output';
 export * from '@/correlation/correlate';
+export * from '@/runtime/collect';
+export * from '@/core/runtime-analyze';

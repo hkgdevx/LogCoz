@@ -24,6 +24,14 @@ export async function analyzeLogInput(
   raw: string,
   options: ExplainOptions | PasteOptions
 ): Promise<ExplainOutputEnvelope> {
+  const explanation = await analyzeExplanation(raw, options);
+  return createExplainOutputEnvelope(explanation);
+}
+
+export async function analyzeExplanation(
+  raw: string,
+  options: ExplainOptions | PasteOptions
+): Promise<ExplanationResult> {
   const redacted = redactSecrets(raw);
   const normalized = normalizeLog(redacted);
   const extracted = extractRelevantBlock(normalized);
@@ -67,5 +75,5 @@ export async function analyzeLogInput(
     };
   }
 
-  return createExplainOutputEnvelope(explanation);
+  return explanation;
 }

@@ -30,6 +30,10 @@ function formatConfidenceReasons(result: ExplanationResult): string {
   return `\n${formatList('Confidence reasons', values)}`;
 }
 
+function formatSecurityFinding(finding: SecurityFinding): string {
+  return `${finding.severity.toUpperCase()} ${finding.kind}: ${finding.title}`;
+}
+
 export function formatExplanation(result: ExplanationResult): string {
   const header = boxen(chalk.cyan.bold(`${CLI_NAME} v${CLI_VERSION}`), {
     padding: 1,
@@ -52,5 +56,50 @@ export function formatExplanation(result: ExplanationResult): string {
     '',
     formatList('Debug commands', result.debugCommands),
     formatConfidenceReasons(result)
+  ].join('\n');
+}
+
+export function formatAnalyzeReport(result: AnalyzeOutputResult): string {
+  const header = boxen(chalk.cyan.bold(`${CLI_NAME} v${CLI_VERSION}`), {
+    padding: 1,
+    borderStyle: 'round'
+  });
+
+  const sourceLines = result.sources.map(
+    (source) => `${source.displayName} (${source.kind}, ${source.serviceType})`
+  );
+  const incidentLines =
+    result.incidents.length > 0
+      ? result.incidents.map(
+          (incident) =>
+            `${incident.title} [${incident.sourceNames.join(', ')}] (${(
+              incident.confidence * 100
+            ).toFixed(0)}%)`
+        )
+      : ['No detected incidents'];
+  const correlationLines =
+    result.correlations.length > 0
+      ? result.correlations.map((incident) => incident.title)
+      : ['No correlated incidents'];
+  const securityLines =
+    result.securityFindings.length > 0
+      ? result.securityFindings.map(formatSecurityFinding)
+      : ['No security findings'];
+  const nextActions =
+    result.summary.nextActions.length > 0
+      ? result.summary.nextActions
+      : ['No follow-up actions generated'];
+
+  return [
+    header,
+    formatList('Discovered sources', sourceLines),
+    '',
+    formatList('Top incidents', incidentLines),
+    '',
+    formatList('Correlations', correlationLines),
+    '',
+    formatList('Security findings', securityLines),
+    '',
+    formatList('Next actions', nextActions)
   ].join('\n');
 }

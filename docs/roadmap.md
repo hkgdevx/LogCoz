@@ -1,103 +1,60 @@
 # Roadmap
 
-This page separates current capabilities from near-term planned work.
+This page separates what is implemented now from the most likely next extensions.
 
 ## Implemented Today
 
-Current user-facing functionality:
+- file-based explanation with `explain <file>`
+- stdin-based explanation with `paste`
+- Docker explanation with `explain docker`
+- file-based correlation with `correlate <files...>`
+- Docker correlation with `correlate docker`
+- grouped local runtime analysis with `analyze`
+- stable JSON envelopes for `explain`, `paste`, `correlate`, and `analyze`
+- first-class runtime targeting for Redis, PostgreSQL, MongoDB, Nginx, generic app containers, and local system/SSH logs
+- evidence-based security findings and posture hints
+- packaged CLI smoke verification before release publish
 
-- log analysis from files with `explain`
-- log analysis from stdin with `paste`
-- multi-file incident grouping with `correlate`
-- terminal and JSON output for `explain` and `paste`
-- detector coverage for Redis, Postgres, DNS, timeouts, port conflicts, Nginx, Docker, and missing files
-- lightweight context hints from env and Compose-like files
-- shallow structured context hints from env, Compose, Kubernetes, and JSON config files
-- best-effort redaction of common secrets
-- opt-in LLM enhancement via mock and HTTP provider modes
-- stable JSON envelope output for `explain` and `paste`
-- cross-platform Linux and Windows debug-command support
+## Highest-Value Next Steps
 
-## Next Best Features
+### 1. Direct Kubernetes runtime collection
 
-These are the highest-value next steps after the current Phase 2 implementation.
+Current releases detect Kubernetes patterns when they appear in collected logs, but do not collect from cluster APIs directly.
 
-### 1. Wire the LLM provider into the command path
+### 2. Better runtime filtering and prioritization
 
-The repository already contains a provider abstraction, including a mock provider, but the main `explain` and `paste` commands do not use it yet.
+Potential additions:
 
-Target outcome:
+- richer source ranking
+- explicit source selection presets
+- better noisy-source suppression during grouped analysis
 
-- opt-in explanation enhancement
-- explicit control via flag or environment
-- clear fallback to deterministic rule-based output
+### 3. Stronger security coverage
 
-### 2. Expand detector coverage
+Potential additions:
 
-Priority additions:
+- more auth and permission incident signatures
+- clearer severity scoring
+- richer evidence summaries for posture findings
 
-- TLS and certificate failures
-- out-of-memory and crash signatures
-- Kubernetes pod and image-pull failures
-- more databases and brokers such as MySQL, MongoDB, Kafka, and RabbitMQ
+### 4. Richer correlation quality
 
-Target outcome:
+Potential additions:
 
-- broader production failure coverage
-- fewer `unknown` fallback results
+- stronger cross-key joins
+- better service attribution
+- more causal hinting between root cause and symptom events
 
-### 3. Improve correlation quality
+### 5. Remote and hosted log sources
 
-Current correlation groups by the first extracted key only.
+Deferred for now:
 
-Priority improvements:
+- remote Docker contexts
+- cloud log backends
+- direct Kubernetes API collection
 
-- timestamp-aware ordering
-- service and source attribution
-- severity-aware grouping
-- stronger distinction between root cause and symptom events
+## Deliberate Non-Goals Right Now
 
-### 4. Stabilize machine-readable outputs
-
-Priority improvements:
-
-- documented JSON schemas
-- machine-readable exit codes
-- more predictable automation contracts
-
-### 5. Add command-level fixture tests
-
-Current tests cover detectors and selection logic well, but the CLI path needs better end-to-end confidence.
-
-Priority improvements:
-
-- fixture-based command tests
-- golden-output verification
-- regression tests for real-world logs
-
-### 6. Deepen context ingestion
-
-Move beyond regex-only hints toward structured parsing for:
-
-- `.env`
-- Compose files
-- Kubernetes manifests
-- app configuration files
-
-### 7. Explain detector confidence
-
-Expose why a detector matched strongly enough, for example:
-
-- matched patterns
-- score contribution
-- helpful context boosts
-
-This would make results easier to trust and debug.
-
-## Not Yet a Priority
-
-These may be useful later, but they are not the current recommended first moves:
-
-- general plugin ecosystems
-- broad external extension APIs
-- nonessential internal refactors without user-facing impact
+- full vulnerability scanning
+- compliance auditing
+- a plugin ecosystem before the core runtime flow is mature

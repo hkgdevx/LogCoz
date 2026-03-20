@@ -39,3 +39,14 @@ export function createCorrelateOutputEnvelope(
     result
   };
 }
+
+export function createAnalyzeOutputEnvelope(result: AnalyzeOutputResult): AnalyzeOutputEnvelope {
+  return {
+    schemaVersion: JSON_SCHEMA_VERSION,
+    cliName: CLI_NAME,
+    cliVersion: CLI_VERSION,
+    exitCode: EXIT_CODE_SUCCESS,
+    status: 'analyzed',
+    result
+  };
+}

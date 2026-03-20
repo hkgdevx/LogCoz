@@ -1,104 +1,67 @@
 # Correlation
 
-`logcoz correlate <files...>` groups log lines into incident candidates using extracted request identifiers.
+LogCoz correlation is a deterministic incident-grouping helper used by both:
+
+- `logcoz correlate <files...>`
+- `logcoz correlate docker`
+
+It is also reused internally by `logcoz analyze`.
 
 ## Current Flow
 
-For each supplied file, LogCoz:
+For each input source, LogCoz:
 
-1. reads the file as text
-2. splits it into individual lines
-3. trims empty lines
-4. converts each line into a `LogEvent`
-5. extracts correlation keys, timestamp, and log level where possible
-6. chooses the strongest available correlation key deterministically
-7. sorts groups by descending event count
+1. splits the source into lines
+2. converts each line into a `LogEvent`
+3. extracts correlation keys, timestamp, log level, and service hints
+4. chooses the strongest supported key deterministically
+5. groups by that key
+6. sorts each timeline by timestamp and severity
+7. derives confidence, shared keys, root-cause hints, and symptom hints
 
 ## Supported Correlation Keys
-
-The current extractor looks for:
 
 - `traceId`
 - `requestId`
 - `correlationId`
 - `jobId`
 
-Examples it can match:
+Examples:
 
 - `traceId=abc-123`
 - `request id: abc123`
 - `correlation-id=order-77`
 - `job_id=sync-99`
 
-## Extracted Event Fields
+## Runtime Source Correlation
 
-Each parsed line may contain:
+For Docker and grouped runtime analysis, each collected source is prefixed before correlation so the pipeline retains source/service attribution.
 
-- `message`
-- `timestamp`
-- `level`
-- `service`
-- `correlationKeys`
+That means correlation can now surface service-aware groupings from:
 
-Timestamp extraction is lightweight and supports common timestamp shapes such as:
+- app containers
+- Nginx containers
+- Redis/Postgres/MongoDB-related logs
+- local system/SSH logs
 
-- ISO-like timestamps
-- `HH:MM:SS`
+## Output
 
-Level extraction looks for:
+Each correlated incident includes:
 
-- `INFO`
-- `WARN`
-- `ERROR`
-- `DEBUG`
-- `TRACE`
+- generated title
+- derived confidence
+- shared keys
+- timeline
+- root-cause hints
+- symptom hints
+- metadata such as discovered services and time-window hints
 
-## Grouping Behavior
+`correlate --json` and `correlate docker --json` both emit stable envelopes.
 
-Grouping uses the strongest supported correlation key from a line. Current priority is:
+## Limits
 
-- `traceId`
-- `correlationId`
-- `requestId`
-- `jobId`
+Correlation is still intentionally lightweight:
 
-For example:
-
-- if a line has `requestId=abc123`, it can group under `requestId:abc123`
-- if a line has multiple keys, the first extracted key wins
-
-This keeps behavior predictable while improving grouping quality over simple first-match ordering.
-
-## Output Shape
-
-For each incident group, the CLI prints:
-
-- a generated incident title
-- a fixed confidence value
-- derived confidence based on severity, timestamps, service presence, and event density
-- shared keys across the grouped events
-- up to 10 timeline entries
-- root-cause hints and symptom hints internally available on the incident model
-
-If no groups are formed, the CLI prints:
-
-```text
-No correlated incidents found.
-```
-
-## Current Limitations
-
-Correlation still does not:
-
-- merge groups across equivalent keys
-- reason about services or components
-- fully infer root cause vs symptom chains
-- export JSON
-
-It is best viewed as a lightweight incident clustering helper, not a full tracing or causality engine.
-
-## Recommended Next Improvements
-
-- combine multiple keys into richer incident joins
-- export structured JSON
-- add structured JSON output
+- it does not merge semantically equivalent keys
+- it does not build a full causal graph
+- it does not replace tracing or distributed observability systems
