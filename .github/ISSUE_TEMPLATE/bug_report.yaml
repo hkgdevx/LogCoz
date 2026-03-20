@@ -48,6 +48,12 @@ body:
       description: Redact secrets before pasting.
       render: bash
 
+  - type: textarea
+    id: docs
+    attributes:
+      label: Related docs or help text
+      description: If the behavior differs from README, docs, or `--help`, mention that here.
+
   - type: input
     id: version
     attributes:

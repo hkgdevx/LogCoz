@@ -31,7 +31,9 @@ try {
   mkdirSync(installPrefix, { recursive: true });
   mkdirSync(extractDir, { recursive: true });
 
-  const packOutput = run(npmCommand, ['pack', '--silent']);
+  run('pnpm', ['build']);
+
+  const packOutput = run(npmCommand, ['pack', '--silent', '--ignore-scripts']);
   const filename = packOutput
     .split(/\r?\n/)
     .map((line) => line.trim())

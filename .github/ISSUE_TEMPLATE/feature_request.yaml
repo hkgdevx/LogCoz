@@ -29,6 +29,13 @@ body:
       placeholder: What are you doing today instead?
 
   - type: textarea
+    id: roadmap
+    attributes:
+      label: Roadmap alignment
+      description: If this idea maps to an existing roadmap milestone, mention it here.
+      placeholder: e.g. Runtime Source Quality and Selection
+
+  - type: textarea
     id: examples
     attributes:
       label: Example usage
@@ -57,4 +64,6 @@ body:
       label: Pre-submit checks
       options:
         - label: I searched existing issues
+          required: true
+        - label: I understand large features may be redirected to roadmap discussion first
           required: true

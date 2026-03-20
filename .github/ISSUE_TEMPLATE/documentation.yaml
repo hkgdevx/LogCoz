@@ -17,3 +17,9 @@ body:
     attributes:
       label: Suggested improvement
       placeholder: Describe the doc change.
+
+  - type: textarea
+    id: references
+    attributes:
+      label: Related command, file, or page
+      placeholder: e.g. analyze --help, README quick start, docs/examples.md

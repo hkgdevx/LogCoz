@@ -1,8 +1,32 @@
 # LogCoz CLI
 
+[![npm version](https://img.shields.io/npm/v/%40hkgdevx%2Flogcoz)](https://www.npmjs.com/package/@hkgdevx/logcoz)
+[![CI](https://img.shields.io/github/actions/workflow/status/hkgdevx/LogCoz/ci.yaml?branch=main&label=ci)](https://github.com/hkgdevx/LogCoz/actions/workflows/ci.yaml)
+[![License](https://img.shields.io/github/license/hkgdevx/LogCoz)](LICENSE)
+
 LogCoz CLI is a TypeScript command-line tool for diagnosing application, container, and host-level failures from logs.
 
 The primary binary is `logcozcli`. `logcoz` remains a supported compatibility alias.
+
+## Project Status
+
+LogCoz is early-stage, actively evolving, and usable today for local log explanation, runtime correlation, grouped analysis, and self-contained HTML reporting.
+
+The project is intentionally local-first in the current release. Remote runtimes, direct Kubernetes collection, cloud log backends, and broader security tooling are still out of scope for now.
+
+## Who This Is For
+
+Good fit:
+
+- engineers debugging application, container, and host-level failures from local logs
+- users who want fast CLI-first incident summaries and HTML reports
+- contributors interested in detectors, runtime analysis, correlation quality, reporting, packaging, and docs
+
+Not a fit:
+
+- full observability platform replacement
+- cloud log aggregation backend
+- vulnerability scanner, compliance tool, or fleet-management system
 
 ## Current Capabilities
 
@@ -58,6 +82,15 @@ After installation, both commands work:
 ## Help and Examples
 
 `logcozcli --help` and each command-level `--help` page now include concrete examples directly in the terminal, so common workflows are discoverable without opening the docs.
+
+## Contributing and Support
+
+- contribution guide: [CONTRIBUTING.md](CONTRIBUTING.md)
+- security policy: [SECURITY.md](SECURITY.md)
+- code of conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- roadmap: [docs/roadmap.md](docs/roadmap.md)
+
+Issues and pull requests are reviewed on a best-effort basis. There is no guaranteed support or review SLA.
 
 ## Quick Start
 
