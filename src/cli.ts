@@ -9,6 +9,7 @@
  IMPORTS
 ***************************************************************************************************************************/
 import { Command } from 'commander';
+import { realpathSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CLI_NAME, CLI_VERSION } from '@/constants/meta';
@@ -211,10 +212,28 @@ export function createProgram(): Command {
   return program;
 }
 
-const program = createProgram();
-const entrypointPath = process.argv[1] ? path.resolve(process.argv[1]) : null;
-const currentPath = fileURLToPath(import.meta.url);
+function resolveComparablePath(input: string | null): string | null {
+  if (!input) return null;
 
-if (entrypointPath === currentPath) {
+  try {
+    return realpathSync(input);
+  } catch {
+    return path.resolve(input);
+  }
+}
+
+export function isCliEntrypoint(
+  entrypointArg: string | null,
+  moduleUrl: string,
+  resolver: (input: string | null) => string | null = resolveComparablePath
+): boolean {
+  const entrypointPath = resolver(entrypointArg);
+  const currentPath = resolver(fileURLToPath(moduleUrl));
+  return entrypointPath === currentPath;
+}
+
+const program = createProgram();
+
+if (isCliEntrypoint(process.argv[1] ?? null, import.meta.url)) {
   program.parse();
 }
