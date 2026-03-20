@@ -1,5 +1,11 @@
 # @hkgdevx/logcoz
 
+## 0.1.3
+
+### Patch Changes
+
+- 4051ead: Added richer help usage
+
 ## 0.1.2
 
 ### Patch Changes
