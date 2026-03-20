@@ -1,5 +1,11 @@
 # @hkgdevx/logcoz
 
+## 0.1.8
+
+### Patch Changes
+
+- 3559697: added minor bug fixes and open source contribution docs
+
 ## 0.1.7
 
 ### Patch Changes
