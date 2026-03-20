@@ -1,5 +1,11 @@
 # @hkgdevx/logcoz
 
+## 0.1.6
+
+### Patch Changes
+
+- c4d87a1: Fix for htmp report overflow and flase postive for MongoDB errors
+
 ## 0.1.5
 
 ### Patch Changes
