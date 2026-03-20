@@ -6,9 +6,13 @@ vi.mock('node:child_process', () => ({
   execFile: execFileMock
 }));
 
-vi.mock('@/utils/file', () => ({
-  readOptionalTextFile: vi.fn()
-}));
+vi.mock('@/utils/file', async () => {
+  const actual = await vi.importActual('@/utils/file');
+  return {
+    ...actual,
+    readOptionalTextFile: vi.fn()
+  };
+});
 
 describe('runtime collectors', () => {
   afterEach(() => {

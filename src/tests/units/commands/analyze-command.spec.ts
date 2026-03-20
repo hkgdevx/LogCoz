@@ -37,6 +37,14 @@ vi.mock('@/runtime/collect', () => ({
   )
 }));
 
+vi.mock('@/utils/file', async () => {
+  const actual = await vi.importActual('@/utils/file');
+  return {
+    ...actual,
+    writeTextFile: vi.fn()
+  };
+});
+
 describe('analyze command', () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -68,5 +76,36 @@ describe('analyze command', () => {
     });
     expect(payload.result.sources).toHaveLength(2);
     expect(payload.result.securityFindings.length).toBeGreaterThan(0);
+  });
+
+  it('writes an html report when --html-out is used', async () => {
+    const { writeTextFile } = await import('@/utils/file');
+    vi.mocked(writeTextFile).mockResolvedValueOnce();
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const { analyze } = await import('@/commands/analyze');
+
+    await analyze({ includeDocker: true, includeSystem: true, htmlOut: 'reports/analyze.html' });
+
+    expect(writeTextFile).toHaveBeenCalledTimes(1);
+    expect(String(vi.mocked(writeTextFile).mock.calls[0]?.[1])).toContain('<!DOCTYPE html>');
+    expect(String(vi.mocked(writeTextFile).mock.calls[0]?.[1])).toContain(
+      'Runtime Analysis Report'
+    );
+    expect(logSpy).toHaveBeenCalledWith('HTML report written to reports/analyze.html');
+  });
+
+  it('fails when --json and --html-out are combined', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { analyze } = await import('@/commands/analyze');
+
+    await analyze({
+      includeDocker: true,
+      includeSystem: true,
+      json: true,
+      htmlOut: 'reports/analyze.html'
+    });
+
+    expect(errorSpy).toHaveBeenCalled();
+    expect(process.exitCode).toBe(1);
   });
 });

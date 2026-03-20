@@ -72,7 +72,7 @@ cat ./worker.log | logcozcli paste --json
 Correlate multiple files into incident groups.
 
 ```bash
-logcozcli correlate <files...> [--json]
+logcozcli correlate <files...> [--json] [--html-out <file>] [--force]
 ```
 
 Examples:
@@ -80,6 +80,7 @@ Examples:
 ```bash
 logcozcli correlate ./api.log ./worker.log ./nginx.log
 logcozcli correlate ./api.log ./nginx.log --json
+logcozcli correlate ./api.log ./nginx.log --html-out ./reports/correlation.html
 ```
 
 ## `logcozcli correlate docker`
@@ -87,7 +88,7 @@ logcozcli correlate ./api.log ./nginx.log --json
 Collect multiple Docker sources and optional system sources, annotate them by source, and run the correlation pipeline.
 
 ```bash
-logcozcli correlate docker [--container <name-or-id...>] [--service <service...>] [--include-system] [--system-source <name...>] [--tail <n>] [--since <value>] [--json]
+logcozcli correlate docker [--container <name-or-id...>] [--service <service...>] [--include-system] [--system-source <name...>] [--tail <n>] [--since <value>] [--json] [--html-out <file>] [--force]
 ```
 
 Key behavior:
@@ -97,6 +98,8 @@ Key behavior:
 - `--service` can be repeated to include multiple service classes
 - `--include-system` adds local system-log sources to the same correlation run
 - `--system-source` narrows the system side to sources such as `ssh`, `docker`, or `syslog`
+- `--html-out <file>` writes a self-contained HTML report instead of terminal text
+- `--force` allows replacing an existing HTML output file
 
 Examples:
 
@@ -104,6 +107,7 @@ Examples:
 logcozcli correlate docker --container api --container nginx
 logcozcli correlate docker --service app --service nginx --json
 logcozcli correlate docker --container api --container nginx --include-system --system-source ssh
+logcozcli correlate docker --container api --container nginx --include-system --html-out ./reports/runtime-correlation.html
 ```
 
 ## `logcozcli analyze`
@@ -111,7 +115,7 @@ logcozcli correlate docker --container api --container nginx --include-system --
 Auto-discover local Docker and local system log sources, then return one grouped analysis report.
 
 ```bash
-logcozcli analyze [--include-docker] [--include-system] [--include-services <services>] [--exclude-sources <sources>] [--container <name-or-id>] [--service <service>] [--tail <n>] [--since <value>] [--json] [--llm] [--llm-provider <provider>] [--llm-endpoint <url>] [--llm-model <model>] [--include-reasoning]
+logcozcli analyze [--include-docker] [--include-system] [--include-services <services>] [--exclude-sources <sources>] [--container <name-or-id>] [--service <service>] [--tail <n>] [--since <value>] [--json] [--html-out <file>] [--force] [--llm] [--llm-provider <provider>] [--llm-endpoint <url>] [--llm-model <model>] [--include-reasoning]
 ```
 
 Key behavior:
@@ -121,6 +125,8 @@ Key behavior:
 - `--include-services <services>` narrows collection by discovered service type
 - `--exclude-sources <sources>` removes named or id-matched sources from the grouped report
 - `--container` and `--service` can be used to bias runtime collection toward a specific Docker target
+- `--html-out <file>` writes a polished self-contained HTML report
+- `--force` allows replacing an existing HTML report
 
 Examples:
 
@@ -129,7 +135,15 @@ logcozcli analyze
 logcozcli analyze --include-docker --json
 logcozcli analyze --include-system --include-services ssh,system
 logcozcli analyze --include-docker --include-system --tail 300 --since 2h --include-reasoning
+logcozcli analyze --include-docker --include-system --html-out ./reports/analyze.html
 ```
+
+## HTML Export Notes
+
+- HTML export is available for `correlate`, `correlate docker`, and `analyze`
+- HTML output is a single offline-friendly file with inline styling only
+- `--json` and `--html-out` are mutually exclusive
+- existing output files are not replaced unless `--force` is provided
 
 ## JSON Output
 

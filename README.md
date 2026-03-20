@@ -12,6 +12,7 @@ The primary binary is `logcozcli`. `logcoz` remains a supported compatibility al
 - `logcozcli correlate <files...>` for multi-file incident grouping
 - `logcozcli correlate docker` for Docker correlation
 - `logcozcli analyze` for grouped local Docker and system-log analysis
+- self-contained HTML report export for `correlate`, `correlate docker`, and `analyze`
 - stable JSON envelopes for `explain`, `paste`, `correlate`, and `analyze`
 - structured context hints from `.env`, Docker Compose, Kubernetes manifests, and JSON config files
 - evidence-based security findings for auth, TLS, SSH, and posture-style risks
@@ -74,19 +75,19 @@ logcozcli explain docker --container api --tail 200 --json
 Correlate multiple files:
 
 ```bash
-logcozcli correlate ./api.log ./worker.log ./nginx.log --json
+logcozcli correlate ./api.log ./worker.log ./nginx.log --html-out ./reports/correlation.html
 ```
 
 Correlate Docker containers:
 
 ```bash
-logcozcli correlate docker --container api --container nginx --include-system --system-source ssh --json
+logcozcli correlate docker --container api --container nginx --include-system --system-source ssh --html-out ./reports/runtime-correlation.html
 ```
 
 Run grouped local analysis:
 
 ```bash
-logcozcli analyze --include-docker --include-system --include-reasoning
+logcozcli analyze --include-docker --include-system --html-out ./reports/analyze.html
 ```
 
 Use the OpenAI provider:
@@ -125,19 +126,36 @@ Kubernetes patterns are still detected when they appear inside gathered logs.
 ### `logcozcli correlate <files...>`
 
 - correlates multiple files using extracted trace/request/job identifiers
-- supports `--json`
+- supports `--json`, `--html-out`, and `--force`
 
 ### `logcozcli correlate docker`
 
 - collects multiple Docker sources and optional local system sources, then runs the correlation pipeline
-- supports repeatable `--container`, repeatable `--service`, `--include-system`, `--system-source`, `--tail`, `--since`, and `--json`
+- supports repeatable `--container`, repeatable `--service`, `--include-system`, `--system-source`, `--tail`, `--since`, `--json`, `--html-out`, and `--force`
 - requires at least 2 collected runtime sources; single-source investigation belongs to `explain docker`
 
 ### `logcozcli analyze`
 
 - auto-discovers local Docker and system sources
 - returns one grouped incident report with sources, incidents, correlations, security findings, and next actions
-- supports `--include-docker`, `--include-system`, `--include-services`, `--exclude-sources`, `--container`, `--service`, `--tail`, `--since`, `--json`, `--llm*`, and `--include-reasoning`
+- supports `--include-docker`, `--include-system`, `--include-services`, `--exclude-sources`, `--container`, `--service`, `--tail`, `--since`, `--json`, `--html-out`, `--force`, `--llm*`, and `--include-reasoning`
+
+## HTML Report Export
+
+For grouped workflows, you can export a polished self-contained HTML report that opens offline in any browser:
+
+```bash
+logcozcli correlate ./api.log ./nginx.log --html-out ./reports/correlation.html
+logcozcli correlate docker --container api --container nginx --include-system --html-out ./reports/runtime-correlation.html
+logcozcli analyze --include-docker --include-system --html-out ./reports/analyze.html
+```
+
+Notes:
+
+- HTML export is available for `correlate`, `correlate docker`, and `analyze`
+- `--json` and `--html-out` cannot be used together
+- existing output files are protected unless you add `--force`
+- the generated report is a single file with inline styling and no external assets
 
 ## JSON Output Contracts
 

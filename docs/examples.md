@@ -41,24 +41,21 @@ Typical use:
 ## Correlate Multiple Files
 
 ```bash
-logcozcli correlate ./fixtures/api.log ./fixtures/nginx.log --json
+logcozcli correlate ./fixtures/api.log ./fixtures/nginx.log --html-out ./reports/correlation.html
 ```
 
-Typical result shape:
+Typical use:
 
-```json
-{
-  "status": "correlated",
-  "result": {
-    "count": 1
-  }
-}
-```
+- open a single browser-friendly report instead of reading terminal output
+- share a self-contained incident timeline with teammates
+- keep the report offline with no external assets
+
+Use `--force` to replace an existing report path.
 
 ## Correlate Docker Sources
 
 ```bash
-logcozcli correlate docker --container api --container nginx --include-system --system-source ssh --json
+logcozcli correlate docker --container api --container nginx --include-system --system-source ssh --html-out ./reports/runtime-correlation.html
 ```
 
 Use this when you want to correlate app, proxy, and host-level evidence without exporting logs to files first.
@@ -68,7 +65,7 @@ Use this when you want to correlate app, proxy, and host-level evidence without 
 ## Run Grouped Runtime Analysis
 
 ```bash
-logcozcli analyze --include-docker --include-system --include-reasoning
+logcozcli analyze --include-docker --include-system --html-out ./reports/analyze.html
 ```
 
 Typical grouped report sections:
@@ -78,6 +75,8 @@ Typical grouped report sections:
 - correlations
 - security findings
 - next actions
+
+The HTML report is self-contained and opens directly in any browser without network access.
 
 ## Analyze MongoDB Runtime Failures
 

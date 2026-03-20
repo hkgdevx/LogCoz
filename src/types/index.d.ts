@@ -193,6 +193,8 @@ interface ExplainOutputEnvelope {
 
 interface CorrelateOptions {
   json?: boolean;
+  htmlOut?: string;
+  force?: boolean;
   container?: string | string[];
   service?: string | string[];
   tail?: string | number;
@@ -202,6 +204,8 @@ interface CorrelateOptions {
 }
 
 interface AnalyzeOptions extends ExplainOptions {
+  htmlOut?: string;
+  force?: boolean;
   includeDocker?: boolean;
   includeSystem?: boolean;
   includeServices?: string;

@@ -10,9 +10,14 @@ vi.mock('ora', () => ({
   })
 }));
 
-vi.mock('@/utils/file', () => ({
-  readTextFile: vi.fn()
-}));
+vi.mock('@/utils/file', async () => {
+  const actual = await vi.importActual('@/utils/file');
+  return {
+    ...actual,
+    readTextFile: vi.fn(),
+    writeTextFile: vi.fn()
+  };
+});
 
 describe('correlate command', () => {
   afterEach(() => {
@@ -57,6 +62,53 @@ describe('correlate command', () => {
       }
     });
     expect(payload.result.incidents).toHaveLength(1);
+  });
+
+  it('writes a self-contained html report when --html-out is used', async () => {
+    const { readTextFile, writeTextFile } = await import('@/utils/file');
+    vi.mocked(readTextFile)
+      .mockResolvedValueOnce(logFixtures.correlationApi)
+      .mockResolvedValueOnce(logFixtures.correlationProxy);
+    vi.mocked(writeTextFile).mockResolvedValueOnce();
+
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const { correlate } = await import('@/commands/correlate');
+
+    await correlate(['api.log', 'nginx.log'], { htmlOut: 'reports/correlation.html' });
+
+    expect(writeTextFile).toHaveBeenCalledTimes(1);
+    expect(String(vi.mocked(writeTextFile).mock.calls[0]?.[1])).toContain('<!DOCTYPE html>');
+    expect(String(vi.mocked(writeTextFile).mock.calls[0]?.[1])).toContain('Correlation Report');
+    expect(logSpy).toHaveBeenCalledWith('HTML report written to reports/correlation.html');
+  });
+
+  it('fails when --json and --html-out are used together', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { correlate } = await import('@/commands/correlate');
+
+    await correlate(['api.log', 'nginx.log'], { json: true, htmlOut: 'reports/correlation.html' });
+
+    expect(errorSpy).toHaveBeenCalled();
+    expect(process.exitCode).toBe(1);
+  });
+
+  it('fails when the html output path already exists and --force is not used', async () => {
+    const { readTextFile, writeTextFile } = await import('@/utils/file');
+    vi.mocked(readTextFile)
+      .mockResolvedValueOnce(logFixtures.correlationApi)
+      .mockResolvedValueOnce(logFixtures.correlationProxy);
+    vi.mocked(writeTextFile).mockRejectedValueOnce(
+      new Error(
+        'Refusing to overwrite existing file: reports/correlation.html. Re-run with --force.'
+      )
+    );
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { correlate } = await import('@/commands/correlate');
+
+    await correlate(['api.log', 'nginx.log'], { htmlOut: 'reports/correlation.html' });
+
+    expect(errorSpy).toHaveBeenCalled();
+    expect(process.exitCode).toBe(1);
   });
 
   it('returns a success envelope with empty results when no incidents are found', async () => {

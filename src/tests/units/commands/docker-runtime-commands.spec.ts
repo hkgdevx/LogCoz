@@ -58,6 +58,14 @@ vi.mock('@/runtime/collect', () => ({
   annotateSourceForCorrelation: vi.fn((source) => `[${source.displayName}] ${source.raw}`)
 }));
 
+vi.mock('@/utils/file', async () => {
+  const actual = await vi.importActual('@/utils/file');
+  return {
+    ...actual,
+    writeTextFile: vi.fn()
+  };
+});
+
 describe('docker runtime commands', () => {
   afterEach(() => {
     vi.clearAllMocks();
@@ -90,6 +98,37 @@ describe('docker runtime commands', () => {
     expect(payload.status).toBe('correlated');
     expect(payload.result.metadata.sourcesAnalyzed).toBe(3);
     expect(payload.result.metadata.sourceKinds).toContain('system-log');
+  });
+
+  it('writes runtime correlation html output when requested', async () => {
+    const { writeTextFile } = await import('@/utils/file');
+    vi.mocked(writeTextFile).mockResolvedValueOnce();
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const { correlateDocker } = await import('@/commands/correlate-docker');
+
+    await correlateDocker({
+      container: ['api', 'nginx'],
+      includeSystem: true,
+      htmlOut: 'reports/runtime-correlation.html'
+    });
+
+    expect(writeTextFile).toHaveBeenCalledTimes(1);
+    expect(String(vi.mocked(writeTextFile).mock.calls[0]?.[1])).toContain('Correlation Report');
+    expect(logSpy).toHaveBeenCalledWith('HTML report written to reports/runtime-correlation.html');
+  });
+
+  it('fails when runtime correlation html and json output are both requested', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { correlateDocker } = await import('@/commands/correlate-docker');
+
+    await correlateDocker({
+      json: true,
+      htmlOut: 'reports/runtime-correlation.html',
+      container: ['api', 'nginx']
+    });
+
+    expect(errorSpy).toHaveBeenCalled();
+    expect(process.exitCode).toBe(1);
   });
 
   it('fails when runtime correlation has only one source', async () => {

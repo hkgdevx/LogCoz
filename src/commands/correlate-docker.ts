@@ -9,10 +9,13 @@
  IMPORTS
 ***************************************************************************************************************************/
 import ora from 'ora';
-import { EXIT_CODE_RUNTIME_ERROR, EXIT_CODE_SUCCESS } from '@/constants/exit';
+import { EXIT_CODE_RUNTIME_ERROR } from '@/constants/exit';
+import { formatCorrelateReport } from '@/core/format';
+import { renderCorrelateHtmlReport } from '@/core/html-report';
 import { createCorrelateOutputEnvelope } from '@/core/output';
 import { correlateLogs } from '@/correlation/correlate';
 import { annotateSourceForCorrelation, collectCorrelationRuntimeSources } from '@/runtime/collect';
+import { writeTextFile } from '@/utils/file';
 
 /**************************************************************************************************************************
  IMPLEMENTATIONS
@@ -21,6 +24,10 @@ export async function correlateDocker(options: CorrelateOptions): Promise<void> 
   const spinner = ora('Collecting runtime sources for correlation...').start();
 
   try {
+    if (options.json && options.htmlOut) {
+      throw new Error('Cannot use --json and --html-out together.');
+    }
+
     const sources = await collectCorrelationRuntimeSources(options);
     if (sources.length === 0) {
       spinner.fail('No matching runtime sources were found');
@@ -47,27 +54,24 @@ export async function correlateDocker(options: CorrelateOptions): Promise<void> 
 
     spinner.succeed('Runtime correlation complete');
 
+    if (options.htmlOut) {
+      await writeTextFile(
+        options.htmlOut,
+        renderCorrelateHtmlReport(envelope),
+        options.force ? { force: true } : {}
+      );
+      console.log(`HTML report written to ${options.htmlOut}`);
+      process.exitCode = envelope.exitCode;
+      return;
+    }
+
     if (options.json) {
       console.log(JSON.stringify(envelope, null, 2));
       process.exitCode = envelope.exitCode;
       return;
     }
 
-    if (incidents.length === 0) {
-      console.log('No correlated incidents found.');
-      process.exitCode = EXIT_CODE_SUCCESS;
-      return;
-    }
-
-    for (const incident of incidents) {
-      console.log(`\nIncident: ${incident.title}`);
-      console.log(`Confidence: ${(incident.confidence * 100).toFixed(0)}%`);
-      console.log(`Shared keys: ${JSON.stringify(incident.sharedKeys)}`);
-      console.log('Timeline:');
-      for (const event of incident.timeline.slice(0, 10)) {
-        console.log(`- ${event.timestamp ?? 'unknown-time'} | ${event.message}`);
-      }
-    }
+    console.log(formatCorrelateReport(envelope.result));
 
     process.exitCode = envelope.exitCode;
   } catch (error) {

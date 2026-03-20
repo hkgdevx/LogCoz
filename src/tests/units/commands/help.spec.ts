@@ -23,7 +23,9 @@ describe('cli help', () => {
 
     expect(output).toContain('Common Workflows:');
     expect(output).toContain('logcozcli explain ./app.log --include-reasoning');
-    expect(output).toContain('logcozcli analyze --include-docker --include-system --json');
+    expect(output).toContain(
+      'logcozcli analyze --include-docker --include-system --html-out ./reports/analyze.html'
+    );
   });
 
   it('renders examples in explain docker help', async () => {
@@ -49,6 +51,7 @@ describe('cli help', () => {
     expect(output).toContain('At least two runtime sources are required.');
     expect(output).toContain('logcozcli correlate docker --container api --container nginx');
     expect(output).toContain('--include-system');
+    expect(output).toContain('--html-out <file>');
   });
 
   it('renders grouped analysis examples in analyze help', async () => {
@@ -60,5 +63,8 @@ describe('cli help', () => {
     expect(output).toContain('Use this for grouped local investigation');
     expect(output).toContain('logcozcli analyze --include-docker --json');
     expect(output).toContain('logcozcli analyze --include-system --include-services ssh,system');
+    expect(output).toContain(
+      'logcozcli analyze --include-docker --include-system --html-out ./reports/analyze.html'
+    );
   });
 });

@@ -12,9 +12,13 @@ vi.mock('ora', () => ({
   }))
 }));
 
-vi.mock('@/utils/file', () => ({
-  readFromStdin: vi.fn()
-}));
+vi.mock('@/utils/file', async () => {
+  const actual = await vi.importActual('@/utils/file');
+  return {
+    ...actual,
+    readFromStdin: vi.fn()
+  };
+});
 
 import { paste } from '@/commands/paste';
 import { readFromStdin } from '@/utils/file';

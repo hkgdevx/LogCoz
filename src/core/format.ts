@@ -34,6 +34,26 @@ function formatSecurityFinding(finding: SecurityFinding): string {
   return `${finding.severity.toUpperCase()} ${finding.kind}: ${finding.title}`;
 }
 
+export function formatCorrelateReport(result: CorrelateOutputResult): string {
+  if (result.incidents.length === 0) {
+    return 'No correlated incidents found.';
+  }
+
+  return result.incidents
+    .map((incident) =>
+      [
+        `Incident: ${incident.title}`,
+        `Confidence: ${(incident.confidence * 100).toFixed(0)}%`,
+        `Shared keys: ${JSON.stringify(incident.sharedKeys)}`,
+        'Timeline:',
+        ...incident.timeline
+          .slice(0, 10)
+          .map((event) => `- ${event.timestamp ?? 'unknown-time'} | ${event.message}`)
+      ].join('\n')
+    )
+    .join('\n\n');
+}
+
 export function formatExplanation(result: ExplanationResult): string {
   const header = boxen(chalk.cyan.bold(`${CLI_NAME} v${CLI_VERSION}`), {
     padding: 1,

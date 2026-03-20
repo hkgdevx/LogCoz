@@ -12,9 +12,13 @@ vi.mock('ora', () => ({
   }))
 }));
 
-vi.mock('@/utils/file', () => ({
-  readTextFile: vi.fn()
-}));
+vi.mock('@/utils/file', async () => {
+  const actual = await vi.importActual('@/utils/file');
+  return {
+    ...actual,
+    readTextFile: vi.fn()
+  };
+});
 
 import { explain } from '@/commands/explain';
 import { readTextFile } from '@/utils/file';
