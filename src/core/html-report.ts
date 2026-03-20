@@ -126,6 +126,7 @@ function renderDocument(title: string, subtitle: string, sections: string[]): st
         padding: 22px;
         margin-top: 20px;
         box-shadow: var(--shadow);
+        min-width: 0;
       }
 
       .section h2, .section h3 {
@@ -163,6 +164,7 @@ function renderDocument(title: string, subtitle: string, sections: string[]): st
         border-radius: 18px;
         padding: 18px;
         background: #fffefa;
+        min-width: 0;
       }
 
       .stack {
@@ -230,11 +232,27 @@ function renderDocument(title: string, subtitle: string, sections: string[]): st
         background: #eff3f5;
         border-radius: 8px;
         padding: 2px 6px;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
 
       ul {
         margin: 0;
         padding-left: 18px;
+      }
+
+      li,
+      p,
+      h1,
+      h2,
+      h3,
+      h4,
+      .muted,
+      .stat-value,
+      .timeline li div {
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
 
       .footer {

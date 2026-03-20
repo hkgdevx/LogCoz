@@ -55,6 +55,10 @@ service=consumer requestId=kafka-123`,
   rabbitMqFailure: `2026-03-19T10:20:00Z ERROR amqp ACCESS_REFUSED - Login was refused using authentication mechanism
 service=worker requestId=rabbit-123`,
 
+  smtpAuthFailure: `2026-03-19T10:22:00Z ERROR Error sending order email Error: Invalid login: 535 Authentication Failed
+response: '535 Authentication Failed'
+service=api requestId=smtp-123`,
+
   correlationApi: `[api] 2026-03-19T10:10:00Z ERROR requestId=abc123 failed to fetch Redis`,
   correlationProxy: `[nginx] 2026-03-19T10:10:01Z WARN requestId=abc123 upstream returned 502`,
   noIncidentsA: `2026-03-19T10:21:00Z INFO startup complete`,

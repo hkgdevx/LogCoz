@@ -1,7 +1,7 @@
 /**************************************************************************************************************************
  Copyright (c) 2026
 
-     Name: mongodb.ts
+     Name: smtp.ts
    Author: Harikrishnan Gangadharan
  Comments:
 
@@ -15,22 +15,16 @@ import { scoreToConfidence } from '@/detectors/shared/confidence';
 /**************************************************************************************************************************
  IMPLEMENTATIONS
 ***************************************************************************************************************************/
-export const mongodb: IssueDetector = {
-  name: 'mongodb-detector',
+export const smtp: IssueDetector = {
+  name: 'smtp-detector',
 
   detect(ctx): DetectionCandidate | null {
     const rules = [
-      { pattern: /\bMongoNetworkError\b/i, weight: 45, label: 'MongoNetworkError' },
-      { pattern: /\bmongodb\b|\bmongo\b/i, weight: 20, label: 'mongodb' },
-      { pattern: /\b27017\b/, weight: 10, label: '27017' },
-      { pattern: /\bnot authorized on\b/i, weight: 40, label: 'not authorized on' },
-      { pattern: /\bauthSource\b/i, weight: 20, label: 'authSource' },
-      { pattern: /\bSCRAM(?:-SHA-\d+)?\b/i, weight: 20, label: 'SCRAM' },
-      {
-        pattern: /\bfailed to connect to server\b/i,
-        weight: 45,
-        label: 'failed to connect to server'
-      }
+      { pattern: /\b535 Authentication Failed\b/i, weight: 45, label: '535 Authentication Failed' },
+      { pattern: /\bInvalid login\b/i, weight: 45, label: 'Invalid login' },
+      { pattern: /\bSMTPAuthenticationError\b/i, weight: 45, label: 'SMTPAuthenticationError' },
+      { pattern: /\b(nodemailer|smtp)\b/i, weight: 20, label: 'smtp' },
+      { pattern: /\b(mail|email)\b/i, weight: 15, label: 'email' }
     ];
 
     const { score, matchedPatterns, confidenceReasons } = runPatternRules(ctx.normalized, rules);
@@ -39,23 +33,22 @@ export const mongodb: IssueDetector = {
 
     return {
       detector: this.name,
-      type: 'mongodb_connection_error',
-      title: 'MongoDB connection or authentication error',
-      category: 'database',
+      type: 'smtp_auth_error',
+      title: 'SMTP or email authentication error',
+      category: 'messaging',
       score,
       confidence: scoreToConfidence(score),
       specificity: 4,
       matchedPatterns,
       confidenceReasons,
       evidence: pickEvidence(ctx.normalized, [
-        /\bMongoNetworkError\b/i,
-        /\bfailed to connect to server\b/i,
-        /\bnot authorized on\b/i,
-        /\bauthSource\b/i,
-        /\bSCRAM(?:-SHA-\d+)?\b/i,
-        /\bmongodb\b|\bmongo\b/i
+        /\b535 Authentication Failed\b/i,
+        /\bInvalid login\b/i,
+        /\bSMTPAuthenticationError\b/i,
+        /\b(nodemailer|smtp)\b/i,
+        /\b(mail|email)\b/i
       ]),
-      summary: 'The application encountered a MongoDB connection or authentication failure.'
+      summary: 'The application could not authenticate with the configured SMTP or email provider.'
     };
   }
 };

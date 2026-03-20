@@ -16,6 +16,7 @@ import { redis } from '@/detectors/database/redis';
 import { postgres } from '@/detectors/database/postgres';
 import { kafka } from '@/detectors/messaging/kafka';
 import { rabbitmq } from '@/detectors/messaging/rabbitmq';
+import { smtp } from '@/detectors/messaging/smtp';
 import { dns } from '@/detectors/network/dns';
 import { port } from '@/detectors/network/port';
 import { tls } from '@/detectors/network/tls';
@@ -36,6 +37,7 @@ export const detectors: IssueDetector[] = [
   mongodb,
   kafka,
   rabbitmq,
+  smtp,
   nginx,
   port,
   timeout,

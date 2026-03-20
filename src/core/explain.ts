@@ -532,6 +532,36 @@ export function explainIssue(issue: DetectionCandidate): ExplanationResult {
         ...withConfidenceReasons(issue)
       };
 
+    case 'smtp_auth_error':
+      return {
+        issueType: issue.type,
+        title: issue.title,
+        category: issue.category,
+        confidence: issue.confidence,
+        explanation:
+          'The application reached the SMTP or email provider, but authentication failed with the configured credentials.',
+        evidence: issue.evidence,
+        likelyCauses: [
+          'Wrong SMTP username or password',
+          'App password or provider-specific credential is required',
+          'The configured mail account, relay, or sender policy is rejecting the login'
+        ],
+        suggestedFixes: [
+          'Verify SMTP host, port, username, and password',
+          'Check whether the provider requires an app password, relay credential, or OAuth flow',
+          'Review the mail provider account and security policy for rejected logins'
+        ],
+        debugCommands: platformDebugCommands(
+          [
+            'printenv | grep -E "SMTP|MAIL"',
+            'docker logs <app-container>',
+            'openssl s_client -starttls smtp -connect <host>:587'
+          ],
+          ['Get-ChildItem Env:SMTP*', 'Get-ChildItem Env:MAIL*', 'docker logs <app-container>']
+        ),
+        ...withConfidenceReasons(issue)
+      };
+
     default:
       return {
         issueType: issue.type,

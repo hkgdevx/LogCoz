@@ -42,6 +42,8 @@ describe('renderCorrelateHtmlReport', () => {
     expect(html).toContain('Shared keys');
     expect(html).toContain('Timeline');
     expect(html).toContain('Self-contained offline report');
+    expect(html).toContain('overflow-wrap: anywhere;');
+    expect(html).toContain('word-break: break-word;');
   });
 });
 
@@ -109,5 +111,6 @@ describe('renderAnalyzeHtmlReport', () => {
     expect(html).toContain('Security Findings');
     expect(html).toContain('Next Actions');
     expect(html).toContain('Repeated authentication failures observed');
+    expect(html).toContain('overflow-wrap: anywhere;');
   });
 });
