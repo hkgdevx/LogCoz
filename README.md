@@ -53,6 +53,10 @@ After installation, both commands work:
 - `logcozcli`
 - `logcoz`
 
+## Help and Examples
+
+`logcozcli --help` and each command-level `--help` page now include concrete examples directly in the terminal, so common workflows are discoverable without opening the docs.
+
 ## Quick Start
 
 Explain a log file:
@@ -76,7 +80,7 @@ logcozcli correlate ./api.log ./worker.log ./nginx.log --json
 Correlate Docker containers:
 
 ```bash
-logcozcli correlate docker --service nginx --tail 300 --json
+logcozcli correlate docker --container api --container nginx --include-system --system-source ssh --json
 ```
 
 Run grouped local analysis:

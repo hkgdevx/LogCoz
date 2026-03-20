@@ -4,6 +4,8 @@ This page documents the current CLI surface as implemented.
 
 The primary command name is `logcozcli`. `logcoz` remains a supported alias.
 
+The in-terminal `--help` output now includes concrete examples for the root command and each major subcommand. This page remains the fuller written reference.
+
 ## Global Command
 
 ```bash
@@ -17,6 +19,14 @@ Analyze a file and explain the strongest detected issue.
 
 ```bash
 logcozcli explain <file> [--json] [--context <files>] [--llm] [--llm-provider <provider>] [--llm-endpoint <url>] [--llm-model <model>] [--include-reasoning]
+```
+
+Examples:
+
+```bash
+logcozcli explain ./app.log
+logcozcli explain ./app.log --json
+logcozcli explain ./app.log --context .env,docker-compose.yml --include-reasoning
 ```
 
 ## `logcozcli explain docker`
@@ -34,6 +44,14 @@ Key options:
 - `--tail <n>` limit collected lines, default `200`
 - `--since <value>` pass a relative duration or timestamp to Docker log collection
 
+Examples:
+
+```bash
+logcozcli explain docker --container api
+logcozcli explain docker --service mongodb --tail 150
+logcozcli explain docker --container api --json
+```
+
 ## `logcozcli paste`
 
 Read logs from stdin and explain the strongest detected issue.
@@ -42,12 +60,26 @@ Read logs from stdin and explain the strongest detected issue.
 logcozcli paste [--json] [--context <files>] [--llm] [--llm-provider <provider>] [--llm-endpoint <url>] [--llm-model <model>] [--include-reasoning]
 ```
 
+Examples:
+
+```bash
+cat ./worker.log | logcozcli paste
+cat ./worker.log | logcozcli paste --json
+```
+
 ## `logcozcli correlate <files...>`
 
 Correlate multiple files into incident groups.
 
 ```bash
 logcozcli correlate <files...> [--json]
+```
+
+Examples:
+
+```bash
+logcozcli correlate ./api.log ./worker.log ./nginx.log
+logcozcli correlate ./api.log ./nginx.log --json
 ```
 
 ## `logcozcli correlate docker`
@@ -66,6 +98,14 @@ Key behavior:
 - `--include-system` adds local system-log sources to the same correlation run
 - `--system-source` narrows the system side to sources such as `ssh`, `docker`, or `syslog`
 
+Examples:
+
+```bash
+logcozcli correlate docker --container api --container nginx
+logcozcli correlate docker --service app --service nginx --json
+logcozcli correlate docker --container api --container nginx --include-system --system-source ssh
+```
+
 ## `logcozcli analyze`
 
 Auto-discover local Docker and local system log sources, then return one grouped analysis report.
@@ -81,6 +121,15 @@ Key behavior:
 - `--include-services <services>` narrows collection by discovered service type
 - `--exclude-sources <sources>` removes named or id-matched sources from the grouped report
 - `--container` and `--service` can be used to bias runtime collection toward a specific Docker target
+
+Examples:
+
+```bash
+logcozcli analyze
+logcozcli analyze --include-docker --json
+logcozcli analyze --include-system --include-services ssh,system
+logcozcli analyze --include-docker --include-system --tail 300 --since 2h --include-reasoning
+```
 
 ## JSON Output
 
