@@ -1,5 +1,11 @@
 # @hkgdevx/logcoz
 
+## 0.1.7
+
+### Patch Changes
+
+- 57db2b2: Recon mode for analyze and docs/roadmap.md added
+
 ## 0.1.6
 
 ### Patch Changes
