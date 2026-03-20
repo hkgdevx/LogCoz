@@ -1,5 +1,11 @@
 # @hkgdevx/logcoz
 
+## 0.1.5
+
+### Patch Changes
+
+- 1c6447c: Added HTML report export
+
 ## 0.1.4
 
 ### Patch Changes
