@@ -1,5 +1,11 @@
 # @hkgdevx/logcoz
 
+## 0.1.4
+
+### Patch Changes
+
+- 903264e: Fix for cli existing silenting when name doesn't match
+
 ## 0.1.3
 
 ### Patch Changes
