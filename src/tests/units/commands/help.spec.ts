@@ -24,7 +24,7 @@ describe('cli help', () => {
     expect(output).toContain('Common Workflows:');
     expect(output).toContain('logcozcli explain ./app.log --include-reasoning');
     expect(output).toContain(
-      'logcozcli analyze --include-docker --include-system --html-out ./reports/analyze.html'
+      'logcozcli analyze --include-docker --include-system --html-out ./reports/system-scan.html --recon'
     );
   });
 
@@ -61,8 +61,16 @@ describe('cli help', () => {
     const output = analyzeCommand.helpInformation();
 
     expect(output).toContain('Use this for grouped local investigation');
+    expect(output).toContain('preferred system-scan workflow');
+    expect(output).toContain('Use --recon with --html-out');
     expect(output).toContain('logcozcli analyze --include-docker --json');
     expect(output).toContain('logcozcli analyze --include-system --include-services ssh,system');
+    expect(output).toContain(
+      'logcozcli analyze --include-docker --include-system --html-out ./reports/system-scan.html'
+    );
+    expect(output).toContain(
+      'logcozcli analyze --include-docker --include-system --html-out ./reports/system-scan.html --recon'
+    );
     expect(output).toContain(
       'logcozcli analyze --include-docker --include-system --html-out ./reports/analyze.html'
     );

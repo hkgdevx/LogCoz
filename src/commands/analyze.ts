@@ -23,6 +23,14 @@ export async function analyze(options: AnalyzeOptions): Promise<void> {
   const spinner = ora('Collecting runtime logs...').start();
 
   try {
+    if (options.recon && options.json) {
+      throw new Error('Cannot use --recon with --json. Recon mode is HTML-only.');
+    }
+
+    if (options.recon && !options.htmlOut) {
+      throw new Error('The --recon option requires --html-out <file>.');
+    }
+
     if (options.json && options.htmlOut) {
       throw new Error('Cannot use --json and --html-out together.');
     }

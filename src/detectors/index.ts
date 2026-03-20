@@ -24,6 +24,7 @@ import { timeout } from '@/detectors/network/timeout';
 import { nginx } from '@/detectors/proxy/nginx';
 import { file } from '@/detectors/runtime/file';
 import { oom } from '@/detectors/runtime/oom';
+import { ssh } from '@/detectors/runtime/ssh';
 
 /**************************************************************************************************************************
  EXPORTS
@@ -43,6 +44,7 @@ export const detectors: IssueDetector[] = [
   timeout,
   tls,
   dns,
+  ssh,
   file,
   oom
 ];

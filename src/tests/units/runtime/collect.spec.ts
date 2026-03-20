@@ -72,6 +72,40 @@ describe('runtime collectors', () => {
     expect(sources[0]?.kind).toBe('system-log');
   });
 
+  it('collects common host service units during system scans', async () => {
+    execFileMock.mockImplementation((command, args, _options, callback) => {
+      if (command !== 'journalctl') {
+        callback(new Error('unexpected command'), '', '');
+        return;
+      }
+
+      const unitIndex = args.indexOf('-u');
+      const unit = unitIndex >= 0 ? String(args[unitIndex + 1]) : '';
+
+      if (unit === 'postgresql') {
+        callback(null, 'database system is ready to accept connections', '');
+        return;
+      }
+
+      if (unit === 'nginx') {
+        callback(
+          null,
+          'connect() failed (111: Connection refused) while connecting to upstream',
+          ''
+        );
+        return;
+      }
+
+      callback(new Error('missing'), '', '');
+    });
+
+    const { collectSystemSources } = await import('@/runtime/collect');
+    const sources = await collectSystemSources({});
+
+    expect(sources.some((source) => source.serviceType === 'postgres')).toBe(true);
+    expect(sources.some((source) => source.serviceType === 'nginx')).toBe(true);
+  });
+
   it('collects mixed correlation sources with optional system logs', async () => {
     execFileMock.mockImplementation((command, args, _options, callback) => {
       if (command === 'docker' && args[0] === 'ps') {

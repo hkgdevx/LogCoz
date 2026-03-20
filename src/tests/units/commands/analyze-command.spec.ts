@@ -87,11 +87,29 @@ describe('analyze command', () => {
     await analyze({ includeDocker: true, includeSystem: true, htmlOut: 'reports/analyze.html' });
 
     expect(writeTextFile).toHaveBeenCalledTimes(1);
-    expect(String(vi.mocked(writeTextFile).mock.calls[0]?.[1])).toContain('<!DOCTYPE html>');
-    expect(String(vi.mocked(writeTextFile).mock.calls[0]?.[1])).toContain(
-      'Runtime Analysis Report'
-    );
+    const html = String(vi.mocked(writeTextFile).mock.calls.at(-1)?.[1]);
+    expect(html).toContain('<!DOCTYPE html>');
+    expect(html).toContain('System Scan Report');
     expect(logSpy).toHaveBeenCalledWith('HTML report written to reports/analyze.html');
+  });
+
+  it('writes a recon html report when --recon is used with --html-out', async () => {
+    const { writeTextFile } = await import('@/utils/file');
+    vi.mocked(writeTextFile).mockResolvedValueOnce();
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const { analyze } = await import('@/commands/analyze');
+
+    await analyze({
+      includeDocker: true,
+      includeSystem: true,
+      htmlOut: 'reports/system-scan.html',
+      recon: true
+    });
+
+    const html = String(vi.mocked(writeTextFile).mock.calls.at(-1)?.[1]);
+    expect(html).toContain('System Scan Report');
+    expect(html).toContain('Timeline Recon');
+    expect(logSpy).toHaveBeenCalledWith('HTML report written to reports/system-scan.html');
   });
 
   it('fails when --json and --html-out are combined', async () => {
@@ -103,6 +121,36 @@ describe('analyze command', () => {
       includeSystem: true,
       json: true,
       htmlOut: 'reports/analyze.html'
+    });
+
+    expect(errorSpy).toHaveBeenCalled();
+    expect(process.exitCode).toBe(1);
+  });
+
+  it('fails when --recon is used without --html-out', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { analyze } = await import('@/commands/analyze');
+
+    await analyze({
+      includeDocker: true,
+      includeSystem: true,
+      recon: true
+    });
+
+    expect(errorSpy).toHaveBeenCalled();
+    expect(process.exitCode).toBe(1);
+  });
+
+  it('fails when --recon and --json are combined', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { analyze } = await import('@/commands/analyze');
+
+    await analyze({
+      includeDocker: true,
+      includeSystem: true,
+      recon: true,
+      json: true,
+      htmlOut: 'reports/system-scan.html'
     });
 
     expect(errorSpy).toHaveBeenCalled();

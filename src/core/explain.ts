@@ -468,6 +468,36 @@ export function explainIssue(issue: DetectionCandidate): ExplanationResult {
         ...withConfidenceReasons(issue)
       };
 
+    case 'ssh_auth_failure':
+      return {
+        issueType: issue.type,
+        title: issue.title,
+        category: issue.category,
+        confidence: issue.confidence,
+        explanation:
+          'The host is seeing failed SSH logins or pre-auth connection probing against one or more accounts.',
+        evidence: issue.evidence,
+        likelyCauses: [
+          'Internet-wide credential stuffing or brute-force scanning',
+          'SSH is exposed publicly and is receiving automated login attempts',
+          'A client is retrying with invalid credentials or disconnecting during pre-auth'
+        ],
+        suggestedFixes: [
+          'Review SSH exposure, allowed users, and authentication logs',
+          'Disable direct root login and enforce key-based authentication where possible',
+          'Add rate limiting, firewall rules, or fail2ban-style blocking for repeated offenders'
+        ],
+        debugCommands: platformDebugCommands(
+          [
+            'sudo journalctl -u ssh --since "1 hour ago"',
+            'sudo grep "Failed password" /var/log/auth.log | tail -n 20',
+            'sudo ss -tnp | grep :22'
+          ],
+          ['Get-WinEvent -LogName Security | Select-Object -First 20', 'netstat -ano | findstr :22']
+        ),
+        ...withConfidenceReasons(issue)
+      };
+
     case 'kafka_broker_error':
       return {
         issueType: issue.type,

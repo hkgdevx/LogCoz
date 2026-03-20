@@ -148,6 +148,27 @@ function buildSummary(
   };
 }
 
+function inferDiscoveryMode(
+  sources: CollectedSource[],
+  options: AnalyzeOptions
+): 'system-scan' | 'guided-auto' | 'docker-only' | 'system-only' {
+  const kinds = new Set(sources.map((source) => source.kind));
+
+  if (kinds.has('docker-container') && kinds.has('system-log')) {
+    return 'system-scan';
+  }
+
+  if (options.includeDocker && !options.includeSystem) {
+    return 'docker-only';
+  }
+
+  if (options.includeSystem && !options.includeDocker) {
+    return 'system-only';
+  }
+
+  return 'guided-auto';
+}
+
 /**************************************************************************************************************************
  IMPLEMENTATIONS
 ***************************************************************************************************************************/
@@ -178,9 +199,11 @@ export async function analyzeCollectedSources(
     securityFindings,
     summary,
     metadata: {
-      discoveryMode: 'guided-auto',
+      discoveryMode: inferDiscoveryMode(sources, options),
+      reportMode: options.recon ? 'recon' : 'standard',
       includeDocker: Boolean(options.includeDocker),
       includeSystem: Boolean(options.includeSystem),
+      serviceTypesDiscovered: [...new Set(sources.map((source) => source.serviceType))],
       includeServices: options.includeServices
         ? options.includeServices
             .split(',')

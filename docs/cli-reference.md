@@ -112,21 +112,23 @@ logcozcli correlate docker --container api --container nginx --include-system --
 
 ## `logcozcli analyze`
 
-Auto-discover local Docker and local system log sources, then return one grouped analysis report.
+Auto-discover local Docker containers and common host/system services, then return one grouped analysis report.
 
 ```bash
-logcozcli analyze [--include-docker] [--include-system] [--include-services <services>] [--exclude-sources <sources>] [--container <name-or-id>] [--service <service>] [--tail <n>] [--since <value>] [--json] [--html-out <file>] [--force] [--llm] [--llm-provider <provider>] [--llm-endpoint <url>] [--llm-model <model>] [--include-reasoning]
+logcozcli analyze [--include-docker] [--include-system] [--include-services <services>] [--exclude-sources <sources>] [--container <name-or-id>] [--service <service>] [--tail <n>] [--since <value>] [--json] [--html-out <file>] [--force] [--recon] [--llm] [--llm-provider <provider>] [--llm-endpoint <url>] [--llm-model <model>] [--include-reasoning]
 ```
 
 Key behavior:
 
 - if no include flags are passed, LogCoz searches both Docker and system sources
 - if include flags are passed, only the requested source families are collected
+- when both Docker and system sources are included, `analyze` acts as the system-wide scan workflow
 - `--include-services <services>` narrows collection by discovered service type
 - `--exclude-sources <sources>` removes named or id-matched sources from the grouped report
 - `--container` and `--service` can be used to bias runtime collection toward a specific Docker target
 - `--html-out <file>` writes a polished self-contained HTML report
 - `--force` allows replacing an existing HTML report
+- `--recon` turns analyze HTML export into a timeline-first reconnaissance report grouped by incident windows and timeframe
 
 Examples:
 
@@ -134,6 +136,8 @@ Examples:
 logcozcli analyze
 logcozcli analyze --include-docker --json
 logcozcli analyze --include-system --include-services ssh,system
+logcozcli analyze --include-docker --include-system --html-out ./reports/system-scan.html
+logcozcli analyze --include-docker --include-system --html-out ./reports/system-scan.html --recon
 logcozcli analyze --include-docker --include-system --tail 300 --since 2h --include-reasoning
 logcozcli analyze --include-docker --include-system --html-out ./reports/analyze.html
 ```
@@ -141,8 +145,12 @@ logcozcli analyze --include-docker --include-system --html-out ./reports/analyze
 ## HTML Export Notes
 
 - HTML export is available for `correlate`, `correlate docker`, and `analyze`
+- `analyze --include-docker --include-system --html-out ...` is the recommended system-scan report flow
+- `--recon` is analyze-only and requires `--html-out`
 - HTML output is a single offline-friendly file with inline styling only
 - `--json` and `--html-out` are mutually exclusive
+- `--recon` cannot be combined with `--json`
+- recon labels inferred chronology for partial timestamps; lines without usable time stay in supporting evidence
 - existing output files are not replaced unless `--force` is provided
 
 ## JSON Output

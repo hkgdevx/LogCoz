@@ -65,7 +65,7 @@ Use this when you want to correlate app, proxy, and host-level evidence without 
 ## Run Grouped Runtime Analysis
 
 ```bash
-logcozcli analyze --include-docker --include-system --html-out ./reports/analyze.html
+logcozcli analyze --include-docker --include-system --html-out ./reports/system-scan.html
 ```
 
 Typical grouped report sections:
@@ -77,6 +77,32 @@ Typical grouped report sections:
 - next actions
 
 The HTML report is self-contained and opens directly in any browser without network access.
+
+When both Docker and system sources are included, this is the preferred system-wide scan workflow.
+
+## Generate A Recon Timeline Report
+
+```bash
+logcozcli analyze --include-docker --include-system --html-out ./reports/system-scan.html --recon
+```
+
+Typical recon report features:
+
+- a summary section at the top
+- incident windows ordered by timeframe
+- grouped events inside each window in chronological order
+- linked findings and recommendations below each time window
+- inferred dates or times are labeled when the log only contains partial timestamps
+
+`--recon` is HTML-only and requires `--html-out`.
+
+Mixed timestamp behavior:
+
+- full timestamps are placed exactly
+- syslog-style month/day/time logs infer the year
+- time-only logs infer the scan date
+- date-only logs infer `00:00:00`
+- untimed lines remain as supporting evidence instead of being forced onto the main timeline
 
 ## Analyze MongoDB Runtime Failures
 

@@ -82,7 +82,7 @@ export function createProgram(): Command {
     '  logcozcli explain docker --container api --json',
     '  logcozcli correlate ./api.log ./nginx.log --html-out ./reports/correlation.html',
     '  logcozcli correlate docker --container api --container nginx --include-system --system-source ssh --html-out ./reports/runtime-correlation.html',
-    '  logcozcli analyze --include-docker --include-system --html-out ./reports/analyze.html'
+    '  logcozcli analyze --include-docker --include-system --html-out ./reports/system-scan.html --recon'
   ]);
 
   const explainCommand = program.command('explain');
@@ -210,18 +210,23 @@ export function createProgram(): Command {
             .option('--include-system', 'Include local system logs during discovery')
             .option('--include-services <services>', 'Comma-separated service types to include')
             .option('--exclude-sources <sources>', 'Comma-separated source ids or names to exclude')
+            .option('--recon', 'Render a timeline-first reconnaissance HTML report')
         ).action(analyze)
       )
     ),
     [
       'Notes:',
-      '  Use this for grouped local investigation across discovered runtime sources.',
+      '  Use this for grouped local investigation or a system-wide scan across discovered runtime sources.',
+      '  With both Docker and system sources enabled, this is the preferred system-scan workflow.',
       '  Use --html-out for a shareable self-contained operations report.',
+      '  Use --recon with --html-out to generate a timeline-first reconnaissance report.',
       '',
       'Examples:',
       '  logcozcli analyze',
       '  logcozcli analyze --include-docker --json',
       '  logcozcli analyze --include-system --include-services ssh,system',
+      '  logcozcli analyze --include-docker --include-system --html-out ./reports/system-scan.html',
+      '  logcozcli analyze --include-docker --include-system --html-out ./reports/system-scan.html --recon',
       '  logcozcli analyze --include-docker --include-services redis,postgres --exclude-sources docker-daemon',
       '  logcozcli analyze --include-docker --include-system --tail 300 --since 2h --include-reasoning',
       '  logcozcli analyze --include-docker --include-system --html-out ./reports/analyze.html',

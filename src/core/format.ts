@@ -84,6 +84,12 @@ export function formatAnalyzeReport(result: AnalyzeOutputResult): string {
     padding: 1,
     borderStyle: 'round'
   });
+  const discoveryMode =
+    typeof result.metadata?.discoveryMode === 'string'
+      ? result.metadata.discoveryMode
+      : 'guided-auto';
+  const heading =
+    discoveryMode === 'system-scan' ? 'System scan across local Docker and host logs' : null;
 
   const sourceLines = result.sources.map(
     (source) => `${source.displayName} (${source.kind}, ${source.serviceType})`
@@ -112,6 +118,7 @@ export function formatAnalyzeReport(result: AnalyzeOutputResult): string {
 
   return [
     header,
+    ...(heading ? [chalk.cyan.bold(heading), ''] : []),
     formatList('Discovered sources', sourceLines),
     '',
     formatList('Top incidents', incidentLines),

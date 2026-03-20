@@ -206,6 +206,7 @@ interface CorrelateOptions {
 interface AnalyzeOptions extends ExplainOptions {
   htmlOut?: string;
   force?: boolean;
+  recon?: boolean;
   includeDocker?: boolean;
   includeSystem?: boolean;
   includeServices?: string;

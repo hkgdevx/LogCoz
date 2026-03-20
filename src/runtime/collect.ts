@@ -266,6 +266,42 @@ export async function collectSystemSources(
       unit: 'ssh'
     },
     {
+      label: 'postgresql',
+      serviceType: 'postgres' as const,
+      args: ['-u', 'postgresql', '-n', tail, '--no-pager', ...sinceArgs],
+      unit: 'postgresql'
+    },
+    {
+      label: 'redis',
+      serviceType: 'redis' as const,
+      args: ['-u', 'redis', '-n', tail, '--no-pager', ...sinceArgs],
+      unit: 'redis'
+    },
+    {
+      label: 'redis-server',
+      serviceType: 'redis' as const,
+      args: ['-u', 'redis-server', '-n', tail, '--no-pager', ...sinceArgs],
+      unit: 'redis-server'
+    },
+    {
+      label: 'mongodb',
+      serviceType: 'mongodb' as const,
+      args: ['-u', 'mongodb', '-n', tail, '--no-pager', ...sinceArgs],
+      unit: 'mongodb'
+    },
+    {
+      label: 'mongod',
+      serviceType: 'mongodb' as const,
+      args: ['-u', 'mongod', '-n', tail, '--no-pager', ...sinceArgs],
+      unit: 'mongod'
+    },
+    {
+      label: 'nginx',
+      serviceType: 'nginx' as const,
+      args: ['-u', 'nginx', '-n', tail, '--no-pager', ...sinceArgs],
+      unit: 'nginx'
+    },
+    {
       label: 'docker-daemon',
       serviceType: 'system' as const,
       args: ['-u', 'docker', '-n', tail, '--no-pager', ...sinceArgs],
@@ -303,6 +339,30 @@ export async function collectSystemSources(
       displayName: 'syslog',
       path: '/var/log/syslog',
       serviceType: 'system' as const
+    },
+    {
+      id: 'nginx-error',
+      displayName: 'nginx-error.log',
+      path: '/var/log/nginx/error.log',
+      serviceType: 'nginx' as const
+    },
+    {
+      id: 'postgresql-log',
+      displayName: 'postgresql.log',
+      path: '/var/log/postgresql/postgresql.log',
+      serviceType: 'postgres' as const
+    },
+    {
+      id: 'redis-log',
+      displayName: 'redis-server.log',
+      path: '/var/log/redis/redis-server.log',
+      serviceType: 'redis' as const
+    },
+    {
+      id: 'mongodb-log',
+      displayName: 'mongodb.log',
+      path: '/var/log/mongodb/mongod.log',
+      serviceType: 'mongodb' as const
     }
   ].filter((candidate) => {
     if (requestedSystemSources.length === 0) return true;

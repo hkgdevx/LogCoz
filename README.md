@@ -12,6 +12,7 @@ The primary binary is `logcozcli`. `logcoz` remains a supported compatibility al
 - `logcozcli correlate <files...>` for multi-file incident grouping
 - `logcozcli correlate docker` for Docker correlation
 - `logcozcli analyze` for grouped local Docker and system-log analysis
+- `logcozcli analyze --recon` for timeline-first reconnaissance HTML reports
 - self-contained HTML report export for `correlate`, `correlate docker`, and `analyze`
 - stable JSON envelopes for `explain`, `paste`, `correlate`, and `analyze`
 - structured context hints from `.env`, Docker Compose, Kubernetes manifests, and JSON config files
@@ -87,7 +88,7 @@ logcozcli correlate docker --container api --container nginx --include-system --
 Run grouped local analysis:
 
 ```bash
-logcozcli analyze --include-docker --include-system --html-out ./reports/analyze.html
+logcozcli analyze --include-docker --include-system --html-out ./reports/system-scan.html --recon
 ```
 
 Use the OpenAI provider:
@@ -136,9 +137,9 @@ Kubernetes patterns are still detected when they appear inside gathered logs.
 
 ### `logcozcli analyze`
 
-- auto-discovers local Docker and system sources
+- auto-discovers local Docker containers and common host/system services
 - returns one grouped incident report with sources, incidents, correlations, security findings, and next actions
-- supports `--include-docker`, `--include-system`, `--include-services`, `--exclude-sources`, `--container`, `--service`, `--tail`, `--since`, `--json`, `--html-out`, `--force`, `--llm*`, and `--include-reasoning`
+- supports `--include-docker`, `--include-system`, `--include-services`, `--exclude-sources`, `--container`, `--service`, `--tail`, `--since`, `--json`, `--html-out`, `--force`, `--recon`, `--llm*`, and `--include-reasoning`
 
 ## HTML Report Export
 
@@ -147,13 +148,18 @@ For grouped workflows, you can export a polished self-contained HTML report that
 ```bash
 logcozcli correlate ./api.log ./nginx.log --html-out ./reports/correlation.html
 logcozcli correlate docker --container api --container nginx --include-system --html-out ./reports/runtime-correlation.html
-logcozcli analyze --include-docker --include-system --html-out ./reports/analyze.html
+logcozcli analyze --include-docker --include-system --html-out ./reports/system-scan.html
+logcozcli analyze --include-docker --include-system --html-out ./reports/system-scan.html --recon
 ```
 
 Notes:
 
 - HTML export is available for `correlate`, `correlate docker`, and `analyze`
+- `analyze --include-docker --include-system --html-out ...` is the preferred system-wide scan report path
+- `--recon` is an analyze-only HTML timeline mode for reconnaissance-style incident windows
 - `--json` and `--html-out` cannot be used together
+- `--recon` requires `--html-out` and cannot be used with `--json`
+- partial timestamps are inferred conservatively and labeled in the report; untimed lines stay as supporting evidence
 - existing output files are protected unless you add `--force`
 - the generated report is a single file with inline styling and no external assets
 
